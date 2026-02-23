@@ -1,0 +1,21 @@
+<svg width="512" height="512" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1f1f23"/>
+      <stop offset="100%" stop-color="#0a0a0c"/>
+    </linearGradient>
+  </defs>
+  <!-- Background with rounded corners -->
+  <rect width="512" height="512" rx="96" fill="url(#bg)"/>
+  <!-- Vinyl record outer ring -->
+  <circle cx="256" cy="270" r="130" fill="none" stroke="#e4e4e7" stroke-width="20"/>
+  <!-- Vinyl grooves -->
+  <circle cx="256" cy="270" r="100" fill="none" stroke="#71717a" stroke-width="2"/>
+  <circle cx="256" cy="270" r="80" fill="none" stroke="#71717a" stroke-width="2"/>
+  <!-- Center label -->
+  <circle cx="256" cy="270" r="45" fill="#e4e4e7"/>
+  <circle cx="256" cy="270" r="8" fill="#18181b"/>
+  <!-- Music note arm -->
+  <rect x="350" y="95" width="20" height="175" rx="10" fill="#e4e4e7"/>
+  <circle cx="360" y="95" r="30" fill="#e4e4e7"/>
+</svg>
