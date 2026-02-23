@@ -1,6 +1,7 @@
-import { createContext, useContext, useState, useCallback, useEffect, type ReactNode } from "react";
+import { createContext, useContext, useState, useCallback, useEffect, useRef, type ReactNode } from "react";
 import { TTrack, TRadioStation } from "@/types";
 import { play_src, play_resume, play_pause, play_seek, set_vol as audio_set_vol, set_cbs } from "@/lib";
+import { listen } from "@tauri-apps/api/event";
 
 export type RepeatMode = "off" | "all" | "one";
 
@@ -138,6 +139,16 @@ export function PlProv({ children }: { children: ReactNode }) {
 
   const toggle_shuffle = useCallback(() => set_shuffle((s) => !s), []);
   const toggle_repeat = useCallback(() => set_repeat((r) => r === "off" ? "all" : r === "all" ? "one" : "off"), []);
+
+  const actions_ref = useRef({ toggle, next, prev });
+  actions_ref.current = { toggle, next, prev };
+
+  useEffect(() => {
+    const u1 = listen("tray_play_pause", () => actions_ref.current.toggle());
+    const u2 = listen("tray_next", () => actions_ref.current.next());
+    const u3 = listen("tray_prev", () => actions_ref.current.prev());
+    return () => { u1.then(f => f()); u2.then(f => f()); u3.then(f => f()); };
+  }, []);
 
   return (
     <Ctx.Provider

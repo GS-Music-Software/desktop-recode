@@ -1,7 +1,7 @@
 use std::sync::Mutex;
 use tauri::{
-    Manager, AppHandle,
-    menu::{Menu, MenuItem},
+    Emitter, Manager, AppHandle,
+    menu::{Menu, MenuItem, PredefinedMenuItem},
     tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent},
 };
 
@@ -17,9 +17,13 @@ fn create(app: &AppHandle) -> Result<(), String> {
     if app.tray_by_id(TRAY_ID).is_some() { return Ok(()); }
 
     let result = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| -> Result<(), String> {
+        let play_pause_i = MenuItem::with_id(app, "play_pause", "Play / Pause", true, None::<&str>).map_err(|e| e.to_string())?;
+        let next_i = MenuItem::with_id(app, "next", "Next", true, None::<&str>).map_err(|e| e.to_string())?;
+        let prev_i = MenuItem::with_id(app, "prev", "Previous", true, None::<&str>).map_err(|e| e.to_string())?;
+        let sep = PredefinedMenuItem::separator(app).map_err(|e| e.to_string())?;
         let show_i = MenuItem::with_id(app, "show", "Show", true, None::<&str>).map_err(|e| e.to_string())?;
         let quit_i = MenuItem::with_id(app, "quit", "Quit", true, None::<&str>).map_err(|e| e.to_string())?;
-        let menu = Menu::with_items(app, &[&show_i, &quit_i]).map_err(|e| e.to_string())?;
+        let menu = Menu::with_items(app, &[&play_pause_i, &next_i, &prev_i, &sep, &show_i, &quit_i]).map_err(|e| e.to_string())?;
 
         TrayIconBuilder::with_id(TRAY_ID)
             .icon(app.default_window_icon().ok_or("no icon")?.clone())
@@ -27,6 +31,9 @@ fn create(app: &AppHandle) -> Result<(), String> {
             .menu(&menu)
             .menu_on_left_click(false)
             .on_menu_event(|app, event| match event.id.as_ref() {
+                "play_pause" => { let _ = app.emit("tray_play_pause", ()); }
+                "next" => { let _ = app.emit("tray_next", ()); }
+                "prev" => { let _ = app.emit("tray_prev", ()); }
                 "show" => {
                     if let Some(w) = app.get_webview_window("main") {
                         let _ = w.show();
