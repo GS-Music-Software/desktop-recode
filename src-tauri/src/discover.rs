@@ -256,7 +256,18 @@ pub async fn download_track(app: AppHandle, id: u64, artist: String, title: Stri
 
     let final_path = out_dir.join(format!("{} - {}.mp3", artist, title));
     if final_path != mp3 {
-        let _ = std::fs::rename(&mp3, &final_path);
+        std::fs::rename(&mp3, &final_path).map_err(|e| format!("final rename: {e}"))?;
+    }
+
+    // attempt #1 to try to fix this shit....
+    for _ in 0..10 {
+        if let Ok(f) = std::fs::File::open(&final_path) {
+            drop(f);
+            if lofty::probe::Probe::open(&final_path).and_then(|p| p.read()).is_ok() {
+                break;
+            }
+        }
+        tokio::time::sleep(std::time::Duration::from_millis(100)).await;
     }
 
     let _ = app.emit("dl_progress", DlProgress { id, pct: 100.0 });
