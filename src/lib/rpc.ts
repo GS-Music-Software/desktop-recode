@@ -74,6 +74,7 @@ export function use_rpc(enabled: boolean, opts?: RpcOpts) {
     const ck = `${current.artist}::${current.title}`;
     if (o.show_art && art_cache.has(ck)) {
       art_ref.current = art_cache.get(ck) ?? null;
+      send();
     } else if (o.show_art) {
       art_ref.current = null;
       rpc_cover(current.artist, current.title).then(url => {
@@ -83,9 +84,8 @@ export function use_rpc(enabled: boolean, opts?: RpcOpts) {
       }).catch(e => console.error("rpc:", e));
     } else {
       art_ref.current = null;
+      send();
     }
-
-    send();
 
     clr_iv();
     iv.current = setInterval(send, 15000);
