@@ -2,7 +2,7 @@ import { useState } from "react";
 import { use_lib, use_theme, DEFAULT_THEME } from "@/ctx";
 import type { CustomTheme } from "@/ctx";
 import { ChevronLeft, RotateCcw, Upload, Download } from "lucide-react";
-import { open, save } from "@tauri-apps/plugin-dialog";
+import { open as open_dialog, save } from "@tauri-apps/plugin-dialog";
 import { readTextFile, writeTextFile } from "@tauri-apps/plugin-fs";
 import { c } from "@/theme";
 import { Toggle } from "../toggle";
@@ -57,7 +57,7 @@ export function ThemeEditor() {
   };
 
   const handle_import = async () => {
-    const path = await open({ filters: [{ name: "Theme", extensions: ["json"] }] });
+    const path = await open_dialog({ filters: [{ name: "Theme", extensions: ["json"] }] });
     if (!path || typeof path !== "string") return;
     try {
       const raw = await readTextFile(path);
