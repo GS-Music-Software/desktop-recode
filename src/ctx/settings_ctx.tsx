@@ -14,6 +14,17 @@ export const EQ_PRESETS: EqPreset[] = [
   { name: "Acoustic",   gains: [3, 2, 2, 1, 0, 1, 2, 2, 2, 1] },
 ];
 
+function load_custom_presets(): EqPreset[] {
+  try {
+    const s = localStorage.getItem("eq_custom_presets");
+    if (s) {
+      const arr = JSON.parse(s);
+      if (Array.isArray(arr)) return arr;
+    }
+  } catch {}
+  return [];
+}
+
 const FLAT = EQ_PRESETS[0].gains;
 
 export type RpcField = "title" | "artist" | "album" | "title_artist" | "artist_album" | "none";
@@ -64,6 +75,9 @@ type SettingsState = {
   set_pitch: (v: number) => void;
   exp_volume: boolean;
   set_exp_volume: (v: boolean) => void;
+  custom_presets: EqPreset[];
+  save_preset: (name: string, gains: number[]) => void;
+  delete_preset: (name: string) => void;
 };
 
 const Ctx = createContext<SettingsState | null>(null);
@@ -94,6 +108,7 @@ export function SettingsProv({ children }: { children: ReactNode }) {
     return s ? parseFloat(s) || 1 : 1;
   });
   const [exp_volume, _set_exp_vol] = useState(() => localStorage.getItem("exp_volume") === "1");
+  const [custom_presets, _set_custom_presets] = useState<EqPreset[]>(load_custom_presets);
 
   useEffect(() => {
     invoke<string | null>("sp_load_client_id").then(id => _set_sp_cid(id ?? null)).catch(e => console.error("sp_load_client_id:", e));
@@ -164,6 +179,20 @@ export function SettingsProv({ children }: { children: ReactNode }) {
     _set_exp_vol(v);
   }
 
+  function save_preset(name: string, gains: number[]) {
+    const trimmed = name.trim();
+    if (!trimmed) return;
+    const next = [...custom_presets.filter(p => p.name !== trimmed), { name: trimmed, gains: [...gains] }];
+    localStorage.setItem("eq_custom_presets", JSON.stringify(next));
+    _set_custom_presets(next);
+  }
+
+  function delete_preset(name: string) {
+    const next = custom_presets.filter(p => p.name !== name);
+    localStorage.setItem("eq_custom_presets", JSON.stringify(next));
+    _set_custom_presets(next);
+  }
+
   function set_sp_client_id(id: string | null) {
     _set_sp_cid(id);
     if (id) invoke("sp_save_client_id", { id }).catch(e => console.error("sp_save_client_id:", e));
@@ -187,7 +216,7 @@ export function SettingsProv({ children }: { children: ReactNode }) {
   }
 
   return (
-    <Ctx.Provider value={{ immersive_bg, set_immersive_bg, eq_bands, set_eq_bands, eq_enabled, set_eq_enabled, discord_rpc, set_discord_rpc, rpc_opts, set_rpc_opts, tray_enabled, set_tray_enabled, sp_client_id, set_sp_client_id, sp_tokens, sp_connect, sp_disconnect, sp_loading, pitch, set_pitch, exp_volume, set_exp_volume }}>
+    <Ctx.Provider value={{ immersive_bg, set_immersive_bg, eq_bands, set_eq_bands, eq_enabled, set_eq_enabled, discord_rpc, set_discord_rpc, rpc_opts, set_rpc_opts, tray_enabled, set_tray_enabled, sp_client_id, set_sp_client_id, sp_tokens, sp_connect, sp_disconnect, sp_loading, pitch, set_pitch, exp_volume, set_exp_volume, custom_presets, save_preset, delete_preset }}>
       {children}
     </Ctx.Provider>
   );

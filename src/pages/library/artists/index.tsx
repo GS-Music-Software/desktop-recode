@@ -35,7 +35,7 @@ export function Artists() {
         all_tracks.length > 0 ? (
           <div style={{ display: "flex", gap: 6 }}>
             <ShufflePlayBtn icon={Play} label="Play" on_click={play_all} />
-            <ShufflePlayBtn icon={Shuffle} label="Shuffle" on_click={shuffle_all} />
+            <ShufflePlayBtn icon={Shuffle} label="Shuffle" on_click={shuffle_all} filled={false} />
           </div>
         ) : undefined
       } />
