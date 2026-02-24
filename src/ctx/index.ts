@@ -6,3 +6,6 @@ export type { EqPreset, RpcField, RpcOpts, SpTokens } from "./settings_ctx";
 export { ToastProv, use_toast } from "./toast_ctx";
 export type { Toast, ToastType } from "./toast_ctx";
 export { ProfileProv, use_profile } from "./profile_ctx";
+export { ThemeProv, use_theme, DEFAULT_THEME } from "./theme_ctx";
+export type { CustomTheme } from "./theme_ctx";
+export type { ThemePreset } from "@/pages/settings/theme_editor/presets";

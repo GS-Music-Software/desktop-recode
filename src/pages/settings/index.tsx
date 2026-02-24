@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { use_lib, use_settings, use_profile } from "@/ctx";
 import { open } from "@tauri-apps/plugin-dialog";
-import { FolderOpen, Wallpaper, RotateCcw, Info, ChevronRight, AppWindow, Volume2 } from "lucide-react";
+import { FolderOpen, Wallpaper, RotateCcw, Info, ChevronRight, AppWindow, Volume2, Palette } from "lucide-react";
 import { SpotifySetup } from "@/components/spotify/setup";
 import { SpotifyConnect } from "@/components/spotify/connect";
 import { Toggle } from "./toggle";
@@ -154,6 +154,19 @@ export function Settings() {
                     </div>
                   </div>
                   <Toggle on={exp_volume} set_on={set_exp_volume} />
+                </div>
+
+                <div style={sep} />
+
+                <div style={{ ...row, cursor: "pointer" }} onClick={() => set_view("theme_editor")}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                    <RowIcon icon={Palette} />
+                    <div>
+                      <p style={{ fontSize: 13, fontWeight: 500, color: c.text }}>Theme</p>
+                      <p style={{ fontSize: 11, color: c.w35, marginTop: 1 }}>Customize colors</p>
+                    </div>
+                  </div>
+                  <ChevronRight size={14} color={c.w20} />
                 </div>
               </div>
             </div>

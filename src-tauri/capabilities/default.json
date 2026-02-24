@@ -6,9 +6,12 @@
     "core:default",
     "dialog:default",
     "dialog:allow-open",
+    "dialog:allow-save",
     "fs:default",
     "fs:allow-read",
     "fs:read-all",
+    "fs:allow-write",
+    "fs:write-all",
     "shell:default",
     "shell:allow-open"
   ]

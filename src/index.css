@@ -1,8 +1,27 @@
+:root {
+  --accent: #fc3c44;
+  --accent-r: 252; --accent-g: 60; --accent-b: 68;
+  --font: #fafafa;
+  --font-r: 250; --font-g: 250; --font-b: 250;
+  --bg1: #09090b;
+  --bg2: #09090b;
+  --bg-flat: #09090b;
+  --bg: #09090b;
+  --bg2-on: 0;
+  --surface: #111113;
+  --surface-raised: #141416;
+  --surface-input: #1c1c1e;
+  --card: #222;
+  --card-alt: #27272a;
+  --card-alt-hover: #3f3f46;
+  --modal: rgba(20,20,22,0.92);
+  --dropdown: rgba(28,28,30,0.95);
+}
 * { margin: 0; padding: 0; box-sizing: border-box; }
 html, body, #root { height: 100%; width: 100%; }
 body {
-  background: #09090b;
-  color: #fafafa;
+  background: var(--bg-flat);
+  color: var(--font);
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", system-ui, sans-serif;
   overflow: hidden;
   user-select: none;
@@ -79,3 +98,7 @@ input[type="range"]:hover::-webkit-slider-thumb { opacity: 1; }
 .ytdlp-panel { animation: ytdlp-panel-in 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) forwards; }
 @keyframes page-in { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
 .page-enter { animation: page-in 0.2s ease-out both; }
+@keyframes picker-open { from { opacity: 0; max-height: 0; transform: translateY(-8px); } to { opacity: 1; max-height: 400px; transform: translateY(0); } }
+.picker-enter { animation: picker-open 0.25s cubic-bezier(0.4,0,0.2,1) forwards; overflow: hidden; }
+@keyframes picker-close { from { opacity: 1; max-height: 400px; transform: translateY(0); } to { opacity: 0; max-height: 0; transform: translateY(-8px); } }
+.picker-exit { animation: picker-close 0.2s cubic-bezier(0.4,0,0.2,1) forwards; overflow: hidden; pointer-events: none; }

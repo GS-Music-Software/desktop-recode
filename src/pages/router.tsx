@@ -7,6 +7,7 @@ import { ArtistDetail } from "./library/artists/detail";
 import { PlaylistDetail } from "./library/playlist_detail";
 import { Settings } from "./settings";
 import { About } from "./settings/about";
+import { ThemeEditor } from "./settings/theme_editor";
 import { Discover } from "./discover";
 import { Audio } from "./audio";
 import { RadioPage } from "./radio";
@@ -27,6 +28,7 @@ export function Router() {
       case "about": return <About />;
       case "radio": return <RadioPage />;
       case "playlist_detail": return <PlaylistDetail />;
+      case "theme_editor": return <ThemeEditor />;
     }
   })();
 

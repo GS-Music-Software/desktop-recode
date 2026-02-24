@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { use_lib, use_pl, use_settings, use_profile } from "@/ctx";
+import { use_lib, use_pl, use_settings, use_profile, use_theme } from "@/ctx";
 import { use_cover, use_rpc } from "@/lib";
 import { Sidebar } from "@/components/layout/sidebar";
 import { PlBar } from "@/components/player/pl_bar";
@@ -48,8 +48,10 @@ export function App() {
   const { loading, err, nav_back, nav_fwd } = use_lib();
   const { current } = use_pl();
   const { immersive_bg, discord_rpc, rpc_opts } = use_settings();
+  const { theme } = use_theme();
   use_rpc(discord_rpc, rpc_opts);
   const { onboarding_done, finish_onboarding } = use_profile();
+  const app_bg = theme.bg2_enabled ? `linear-gradient(135deg, ${theme.bg1}, ${theme.bg2})` : c.bg;
   const cover = use_cover(immersive_bg ? (current?.path ?? null) : null);
   const [ytdlp_ready, set_ytdlp_ready] = useState(false);
 
@@ -64,7 +66,7 @@ export function App() {
 
   if (!onboarding_done) {
     return (
-      <div style={{ ...base, background: c.bg }}>
+      <div style={{ ...base, background: app_bg }}>
         <Onboarding on_done={finish_onboarding} />
         {!ytdlp_ready && <YtdlpSetup on_ready={() => set_ytdlp_ready(true)} />}
         <OfflineNotice />
@@ -72,9 +74,9 @@ export function App() {
     );
   }
 
-  if (loading) return <div style={{ ...base, background: c.bg }}><Loading /><OfflineNotice /></div>;
+  if (loading) return <div style={{ ...base, background: app_bg }}><Loading /><OfflineNotice /></div>;
   if (err) return (
-    <div style={{ ...base, background: c.bg, alignItems: "center", justifyContent: "center", gap: 12 }}>
+    <div style={{ ...base, background: app_bg, alignItems: "center", justifyContent: "center", gap: 12 }}>
       <p style={{ fontSize: 14, color: c.accent, fontWeight: 600 }}>Scan failed</p>
       <p style={{ fontSize: 12, color: c.w40, maxWidth: 400, textAlign: "center", wordBreak: "break-all" }}>{err}</p>
       <OfflineNotice />
@@ -82,7 +84,7 @@ export function App() {
   );
 
   return (
-    <div style={{ ...base, background: immersive_bg ? "transparent" : c.bg }} className={immersive_bg ? "iv-mode" : ""}>
+    <div style={{ ...base, background: immersive_bg ? "transparent" : app_bg }} className={immersive_bg ? "iv-mode" : ""}>
       {immersive_bg && <ImmersiveBg key={current?.path ?? "none"} cover={cover} />}
       <div style={{ display: "flex", flex: 1, minHeight: 0, position: "relative", zIndex: 1 }}>
         <Sidebar />
