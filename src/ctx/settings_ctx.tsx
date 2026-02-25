@@ -68,6 +68,7 @@ type SettingsState = {
   sp_client_id: string | null;
   set_sp_client_id: (id: string | null) => void;
   sp_tokens: SpTokens | null;
+  sp_token: () => Promise<string>;
   sp_connect: (override_id?: string) => Promise<void>;
   sp_disconnect: () => Promise<void>;
   sp_loading: boolean;
@@ -198,6 +199,13 @@ export function SettingsProv({ children }: { children: ReactNode }) {
     if (id) invoke("sp_save_client_id", { id }).catch(e => console.error("sp_save_client_id:", e));
   }
 
+  async function sp_token(): Promise<string> {
+    const fresh = await invoke<SpTokens | null>("sp_fresh_token");
+    if (!fresh) throw new Error("not connected to spotify");
+    _set_sp_tokens(fresh);
+    return fresh.access_token;
+  }
+
   async function sp_connect(override_id?: string) {
     const cid = override_id ?? sp_client_id;
     if (!cid) return;
@@ -216,7 +224,7 @@ export function SettingsProv({ children }: { children: ReactNode }) {
   }
 
   return (
-    <Ctx.Provider value={{ immersive_bg, set_immersive_bg, eq_bands, set_eq_bands, eq_enabled, set_eq_enabled, discord_rpc, set_discord_rpc, rpc_opts, set_rpc_opts, tray_enabled, set_tray_enabled, sp_client_id, set_sp_client_id, sp_tokens, sp_connect, sp_disconnect, sp_loading, pitch, set_pitch, exp_volume, set_exp_volume, custom_presets, save_preset, delete_preset }}>
+    <Ctx.Provider value={{ immersive_bg, set_immersive_bg, eq_bands, set_eq_bands, eq_enabled, set_eq_enabled, discord_rpc, set_discord_rpc, rpc_opts, set_rpc_opts, tray_enabled, set_tray_enabled, sp_client_id, set_sp_client_id, sp_tokens, sp_token, sp_connect, sp_disconnect, sp_loading, pitch, set_pitch, exp_volume, set_exp_volume, custom_presets, save_preset, delete_preset }}>
       {children}
     </Ctx.Provider>
   );

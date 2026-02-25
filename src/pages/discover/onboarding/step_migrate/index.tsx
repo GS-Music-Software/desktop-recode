@@ -26,7 +26,7 @@ type Props = { on_next: () => void };
 
 export function StepMigrate({ on_next }: Props) {
   const { music_dir, load_library, load_playlists, toggle_fav } = use_lib();
-  const { sp_client_id, set_sp_client_id, sp_tokens, sp_connect, sp_loading } =
+  const { sp_client_id, set_sp_client_id, sp_tokens, sp_token, sp_connect, sp_loading } =
     use_settings();
 
   const [view, set_view] = useState<View>("home");
@@ -188,13 +188,7 @@ export function StepMigrate({ on_next }: Props) {
   async function load_sp_playlists() {
     set_sp_pls_loading(true);
     try {
-      const token = (
-        await invoke<{ access_token: string } | null>("sp_load_tokens")
-      )?.access_token;
-      if (!token) {
-        set_sp_pls_loading(false);
-        return;
-      }
+      const token = await sp_token();
       const pls = await invoke<SpPlaylist[]>("sp_playlists", {
         accessToken: token,
       });
@@ -219,11 +213,10 @@ export function StepMigrate({ on_next }: Props) {
   async function start_sp_migration() {
     set_view("sp_migrating");
     mig_offset.current = 0;
-    const token =
-      sp_tokens?.access_token ??
-      (await invoke<{ access_token: string } | null>("sp_load_tokens"))
-        ?.access_token;
-    if (!token) return;
+    let token: string;
+    try {
+      token = await sp_token();
+    } catch { return; }
 
     const items: {
       name: string;

@@ -3,6 +3,7 @@ mod auth;
 mod tokens;
 pub mod types;
 
+use std::time::{SystemTime, UNIX_EPOCH};
 use types::{Tokens, Playlist, SpTrack};
 
 #[tauri::command]
@@ -32,6 +33,21 @@ pub async fn sp_load_tokens() -> Result<Option<Tokens>, String> {
 pub async fn sp_disconnect() -> Result<(), String> {
     tokens::clear_tokens();
     Ok(())
+}
+
+#[tauri::command]
+pub async fn sp_fresh_token() -> Result<Option<Tokens>, String> {
+    let Some(t) = tokens::load_tokens() else { return Ok(None) };
+    let now = SystemTime::now().duration_since(UNIX_EPOCH).unwrap_or_default().as_secs();
+    if t.expires_at > now {
+        return Ok(Some(t));
+    }
+    let Some(cid) = tokens::load_client_id() else {
+        return Err("no client id saved".into());
+    };
+    let refreshed = auth::refresh(&cid, &t).await?;
+    tokens::save_tokens(&refreshed);
+    Ok(Some(refreshed))
 }
 
 #[tauri::command]

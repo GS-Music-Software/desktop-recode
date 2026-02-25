@@ -18,7 +18,7 @@ import { use_downloads } from "./hooks/use_downloads";
 import { c } from "@/theme";
 
 export function Discover() {
-  const { sp_tokens } = use_settings();
+  const { sp_tokens, sp_token } = use_settings();
   const {
     downloads, dl_track,
     sp_dl_keys, dl_sp_track, dl_sp_all,
@@ -87,7 +87,8 @@ export function Discover() {
     if (!sp_tokens) return;
     set_sp_loading(true);
     try {
-      const pls = await invoke<SpPlaylist[]>("sp_playlists", { accessToken: sp_tokens.access_token });
+      const token = await sp_token();
+      const pls = await invoke<SpPlaylist[]>("sp_playlists", { accessToken: token });
       set_sp_playlists(pls);
     } catch {
       set_sp_playlists([]);
@@ -100,7 +101,8 @@ export function Discover() {
     if (!sp_tokens) return;
     set_sp_drill({ kind: "playlist", name: pl.name, tracks: null });
     try {
-      const tracks = await invoke<SpTrack[]>("sp_playlist_tracks", { accessToken: sp_tokens.access_token, id: pl.id });
+      const token = await sp_token();
+      const tracks = await invoke<SpTrack[]>("sp_playlist_tracks", { accessToken: token, id: pl.id });
       set_sp_drill({ kind: "playlist", name: pl.name, tracks });
     } catch {
       set_sp_drill({ kind: "playlist", name: pl.name, tracks: [] });
@@ -111,7 +113,8 @@ export function Discover() {
     if (!sp_tokens) return;
     set_sp_drill({ kind: "liked", name: "Liked Songs", tracks: null });
     try {
-      const tracks = await invoke<SpTrack[]>("sp_liked_tracks", { accessToken: sp_tokens.access_token });
+      const token = await sp_token();
+      const tracks = await invoke<SpTrack[]>("sp_liked_tracks", { accessToken: token });
       set_sp_drill({ kind: "liked", name: "Liked Songs", tracks });
     } catch {
       set_sp_drill({ kind: "liked", name: "Liked Songs", tracks: [] });

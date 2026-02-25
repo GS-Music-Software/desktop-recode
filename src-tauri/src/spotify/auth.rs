@@ -3,9 +3,13 @@ use base64::{Engine, engine::general_purpose::URL_SAFE_NO_PAD};
 use rand::Rng;
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
 use tokio::net::TcpListener;
-use std::time::Duration;
+use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
 use super::types::{Tokens, TokenRes, ProfileRes};
+
+fn now_secs() -> u64 {
+    SystemTime::now().duration_since(UNIX_EPOCH).unwrap_or_default().as_secs()
+}
 
 const AUTH_URL: &str = "https://accounts.spotify.com/authorize";
 const TOKEN_URL: &str = "https://accounts.spotify.com/api/token";
@@ -131,5 +135,32 @@ pub async fn authorize(client_id: &str) -> Result<Tokens, String> {
         access_token: token_res.access_token,
         refresh_token: token_res.refresh_token.unwrap_or_default(),
         display_name: profile.display_name.unwrap_or_else(|| String::from("spotify user")),
+        expires_at: now_secs() + token_res.expires_in.saturating_sub(60),
+    })
+}
+
+pub async fn refresh(client_id: &str, tokens: &Tokens) -> Result<Tokens, String> {
+    eprintln!("[spotify] refreshing access token");
+    let client = reqwest::Client::new();
+    let token_res: TokenRes = client
+        .post(TOKEN_URL)
+        .form(&[
+            ("grant_type", "refresh_token"),
+            ("refresh_token", &tokens.refresh_token),
+            ("client_id", client_id),
+        ])
+        .send()
+        .await
+        .map_err(|e| { eprintln!("[spotify] refresh req failed: {e}"); format!("refresh req: {e}") })?
+        .json()
+        .await
+        .map_err(|e| { eprintln!("[spotify] refresh parse failed: {e}"); format!("refresh parse: {e}") })?;
+
+    eprintln!("[spotify] token refreshed successfully");
+    Ok(Tokens {
+        access_token: token_res.access_token,
+        refresh_token: token_res.refresh_token.unwrap_or_else(|| tokens.refresh_token.clone()),
+        display_name: tokens.display_name.clone(),
+        expires_at: now_secs() + token_res.expires_in.saturating_sub(60),
     })
 }

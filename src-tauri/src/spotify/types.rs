@@ -5,6 +5,8 @@ pub struct Tokens {
     pub access_token: String,
     pub refresh_token: String,
     pub display_name: String,
+    #[serde(default)]
+    pub expires_at: u64,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -27,7 +29,11 @@ pub struct SpTrack {
 pub struct TokenRes {
     pub access_token: String,
     pub refresh_token: Option<String>,
+    #[serde(default = "default_expires_in")]
+    pub expires_in: u64,
 }
+
+fn default_expires_in() -> u64 { 3600 }
 
 #[derive(Debug, Deserialize)]
 pub struct ProfileRes {
