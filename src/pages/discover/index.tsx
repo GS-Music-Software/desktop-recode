@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
+import { message } from "@tauri-apps/plugin-dialog";
 import { Music2 } from "lucide-react";
 import { use_settings } from "@/ctx";
 import { SpPlaylistList, SpTrackList } from "@/components/spotify/discover";
@@ -90,8 +91,9 @@ export function Discover() {
       const token = await sp_token();
       const pls = await invoke<SpPlaylist[]>("sp_playlists", { accessToken: token });
       set_sp_playlists(pls);
-    } catch {
+    } catch (e) {
       set_sp_playlists([]);
+      message(`Failed to load playlists:\n${e}`, { title: "Spotify Error", kind: "error" });
     } finally {
       set_sp_loading(false);
     }
@@ -104,8 +106,9 @@ export function Discover() {
       const token = await sp_token();
       const tracks = await invoke<SpTrack[]>("sp_playlist_tracks", { accessToken: token, id: pl.id });
       set_sp_drill({ kind: "playlist", name: pl.name, tracks });
-    } catch {
+    } catch (e) {
       set_sp_drill({ kind: "playlist", name: pl.name, tracks: [] });
+      message(`Failed to load playlist "${pl.name}":\n${e}`, { title: "Spotify Error", kind: "error" });
     }
   }
 
@@ -116,8 +119,9 @@ export function Discover() {
       const token = await sp_token();
       const tracks = await invoke<SpTrack[]>("sp_liked_tracks", { accessToken: token });
       set_sp_drill({ kind: "liked", name: "Liked Songs", tracks });
-    } catch {
+    } catch (e) {
       set_sp_drill({ kind: "liked", name: "Liked Songs", tracks: [] });
+      message(`Failed to load liked songs:\n${e}`, { title: "Spotify Error", kind: "error" });
     }
   }
 

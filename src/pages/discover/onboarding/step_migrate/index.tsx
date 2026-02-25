@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
+import { message } from "@tauri-apps/plugin-dialog";
 import { use_lib, use_settings } from "@/ctx";
 import type { SpPlaylist, SpTrack } from "@/components/spotify/discover";
 import type { YtPlaylistResult, YtTrack } from "@/components/youtube/discover";
@@ -194,8 +195,9 @@ export function StepMigrate({ on_next }: Props) {
       });
       set_sp_pls(pls);
       set_sp_checked(new Set(pls.map((p) => p.id)));
-    } catch {
+    } catch (e) {
       set_sp_pls([]);
+      message(`Failed to load playlists:\n${e}`, { title: "Spotify Error", kind: "error" });
     } finally {
       set_sp_pls_loading(false);
     }
@@ -216,7 +218,10 @@ export function StepMigrate({ on_next }: Props) {
     let token: string;
     try {
       token = await sp_token();
-    } catch { return; }
+    } catch (e) {
+      message(`Failed to get Spotify token:\n${e}`, { title: "Spotify Error", kind: "error" });
+      return;
+    }
 
     const items: {
       name: string;
@@ -230,7 +235,10 @@ export function StepMigrate({ on_next }: Props) {
           accessToken: token,
         });
         items.push({ name: "Liked Songs", kind: "liked", tracks });
-      } catch (e) { console.error("sp_liked_tracks:", e); }
+      } catch (e) {
+        console.error("sp_liked_tracks:", e);
+        message(`Failed to load liked songs:\n${e}`, { title: "Spotify Error", kind: "error" });
+      }
     }
 
     for (const id of sp_checked) {
@@ -242,7 +250,10 @@ export function StepMigrate({ on_next }: Props) {
           id,
         });
         items.push({ name: pl.name, kind: "playlist", tracks });
-      } catch (e) { console.error("sp_playlist_tracks:", e); }
+      } catch (e) {
+        console.error("sp_playlist_tracks:", e);
+        message(`Failed to load playlist "${pl.name}":\n${e}`, { title: "Spotify Error", kind: "error" });
+      }
     }
 
     const total = items.reduce((s, i) => s + i.tracks.length, 0);
