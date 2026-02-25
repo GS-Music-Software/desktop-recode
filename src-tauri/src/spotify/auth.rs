@@ -120,14 +120,17 @@ pub async fn authorize(client_id: &str) -> Result<Tokens, String> {
         .map_err(|e| { eprintln!("[spotify] token parse failed: {e}"); format!("token parse: {e}") })?;
 
     eprintln!("[spotify] fetching profile");
-    let profile: ProfileRes = reqwest::Client::new()
+    let profile_body = reqwest::Client::new()
         .get(format!("{API}/me"))
         .header("Authorization", format!("Bearer {}", token_res.access_token))
         .send()
         .await
         .map_err(|e| { eprintln!("[spotify] profile req failed: {e}"); format!("profile req: {e}") })?
-        .json()
+        .text()
         .await
+        .map_err(|e| { eprintln!("[spotify] profile read failed: {e}"); format!("profile read: {e}") })?;
+    eprintln!("[spotify] profile response: {profile_body}");
+    let profile: ProfileRes = serde_json::from_str(&profile_body)
         .map_err(|e| { eprintln!("[spotify] profile parse failed: {e}"); format!("profile parse: {e}") })?;
 
     eprintln!("[spotify] authorized as {}", profile.display_name.as_deref().unwrap_or("unknown"));
