@@ -35,34 +35,53 @@ fn open_browser(url: &str) {
     let _ = std::process::Command::new("cmd").args(["/C", "start", "", url]).spawn();
 }
 
-async fn listen_callback() -> Result<String, String> {
-    let listener = TcpListener::bind(format!("127.0.0.1:{PORT}"))
-        .await
-        .map_err(|e| format!("bind: {e}"))?;
-
-    let (mut stream, _) = tokio::time::timeout(Duration::from_secs(120), listener.accept())
-        .await
-        .map_err(|_| String::from("auth timeout"))?
-        .map_err(|e| format!("accept: {e}"))?;
-
-    let mut buf = vec![0u8; 4096];
-    let n = stream.read(&mut buf).await.map_err(|e| format!("read: {e}"))?;
-    let req = String::from_utf8_lossy(&buf[..n]);
-
-    let code = req
-        .lines()
+fn extract_code(req: &str) -> Option<String> {
+    req.lines()
         .next()
         .and_then(|line| line.split_whitespace().nth(1))
         .and_then(|path| path.split('?').nth(1))
         .and_then(|qs| qs.split('&').find(|p| p.starts_with("code=")))
         .map(|p| p.trim_start_matches("code=").to_string())
-        .ok_or_else(|| String::from("no code in callback"))?;
+}
 
-    let html = "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\n\r\n\
-                <html><body><h3>connected, you can close this tab</h3></body></html>";
-    let _ = stream.write_all(html.as_bytes()).await;
+async fn listen_callback() -> Result<String, String> {
+    eprintln!("[spotify] binding to 127.0.0.1:{PORT}");
+    let listener = TcpListener::bind(format!("127.0.0.1:{PORT}"))
+        .await
+        .map_err(|e| format!("bind: {e}"))?;
 
-    Ok(code)
+    let deadline = tokio::time::Instant::now() + Duration::from_secs(120);
+
+    loop {
+        let remaining = deadline.saturating_duration_since(tokio::time::Instant::now());
+        if remaining.is_zero() {
+            eprintln!("[spotify] auth timeout after 120s");
+            return Err(String::from("auth timeout"));
+        }
+
+        let (mut stream, addr) = tokio::time::timeout(remaining, listener.accept())
+            .await
+            .map_err(|_| String::from("auth timeout"))?
+            .map_err(|e| format!("accept: {e}"))?;
+
+        let mut buf = vec![0u8; 4096];
+        let n = stream.read(&mut buf).await.map_err(|e| format!("read: {e}"))?;
+        let req = String::from_utf8_lossy(&buf[..n]);
+        let first_line = req.lines().next().unwrap_or("");
+        eprintln!("[spotify] request from {addr}: {first_line}");
+
+        if let Some(code) = extract_code(&req) {
+            eprintln!("[spotify] got auth code");
+            let html = "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\n\r\n\
+                        <html><body><h3>connected, you can close this tab</h3></body></html>";
+            let _ = stream.write_all(html.as_bytes()).await;
+            return Ok(code);
+        }
+
+        eprintln!("[spotify] no code in request, waiting for next...");
+        let html = "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\n\r\n";
+        let _ = stream.write_all(html.as_bytes()).await;
+    }
 }
 
 pub async fn authorize(client_id: &str) -> Result<Tokens, String> {
