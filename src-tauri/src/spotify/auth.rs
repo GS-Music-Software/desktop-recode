@@ -93,9 +93,11 @@ pub async fn authorize(client_id: &str) -> Result<Tokens, String> {
          &code_challenge={challenge}&code_challenge_method=S256&scope={SCOPES}"
     );
 
+    eprintln!("[spotify] opening browser for auth");
     open_browser(&auth_url);
     let code = listen_callback().await?;
 
+    eprintln!("[spotify] exchanging code for tokens");
     let client = reqwest::Client::new();
     let token_res: TokenRes = client
         .post(TOKEN_URL)
@@ -108,21 +110,23 @@ pub async fn authorize(client_id: &str) -> Result<Tokens, String> {
         ])
         .send()
         .await
-        .map_err(|e| format!("token req: {e}"))?
+        .map_err(|e| { eprintln!("[spotify] token req failed: {e}"); format!("token req: {e}") })?
         .json()
         .await
-        .map_err(|e| format!("token parse: {e}"))?;
+        .map_err(|e| { eprintln!("[spotify] token parse failed: {e}"); format!("token parse: {e}") })?;
 
+    eprintln!("[spotify] fetching profile");
     let profile: ProfileRes = reqwest::Client::new()
         .get(format!("{API}/me"))
         .header("Authorization", format!("Bearer {}", token_res.access_token))
         .send()
         .await
-        .map_err(|e| format!("profile req: {e}"))?
+        .map_err(|e| { eprintln!("[spotify] profile req failed: {e}"); format!("profile req: {e}") })?
         .json()
         .await
-        .map_err(|e| format!("profile parse: {e}"))?;
+        .map_err(|e| { eprintln!("[spotify] profile parse failed: {e}"); format!("profile parse: {e}") })?;
 
+    eprintln!("[spotify] authorized as {}", profile.display_name.as_deref().unwrap_or("unknown"));
     Ok(Tokens {
         access_token: token_res.access_token,
         refresh_token: token_res.refresh_token.unwrap_or_default(),
