@@ -12,15 +12,24 @@ type Props = {
   on_toggle: () => void;
 };
 
-export function ColorRow({ label, description, value, on_change, open, on_toggle }: Props) {
+export function ColorRow({
+  label,
+  description,
+  value,
+  on_change,
+  open,
+  on_toggle,
+}: Props) {
   const [hov, set_hov] = useState(false);
   const [visible, set_visible] = useState(false);
   const [closing, set_closing] = useState(false);
-  const timer = useRef<ReturnType<typeof setTimeout>>();
+  const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     if (open) {
-      clearTimeout(timer.current);
+      if (timer.current) {
+        clearTimeout(timer.current);
+      }
       set_closing(false);
       set_visible(true);
     } else if (visible) {
@@ -30,7 +39,11 @@ export function ColorRow({ label, description, value, on_change, open, on_toggle
         set_closing(false);
       }, 200);
     }
-    return () => clearTimeout(timer.current);
+    return () => {
+      if (timer.current) {
+        clearTimeout(timer.current);
+      }
+    };
   }, [open]);
 
   return (
@@ -50,20 +63,38 @@ export function ColorRow({ label, description, value, on_change, open, on_toggle
           opacity: hov ? 1 : 0.85,
         }}
       >
-        <div style={{
-          width: 32,
-          height: 32,
-          borderRadius: 8,
-          background: value,
-          border: "1.5px solid rgba(255,255,255,0.12)",
-          flexShrink: 0,
-          boxShadow: "0 2px 8px rgba(0,0,0,0.3)",
-        }} />
+        <div
+          style={{
+            width: 32,
+            height: 32,
+            borderRadius: 8,
+            background: value,
+            border: "1.5px solid rgba(255,255,255,0.12)",
+            flexShrink: 0,
+            boxShadow: "0 2px 8px rgba(0,0,0,0.3)",
+          }}
+        />
         <div style={{ flex: 1, textAlign: "left" }}>
-          <p style={{ fontSize: 13, fontWeight: 500, color: c.text }}>{label}</p>
-          {description && <p style={{ fontSize: 11, color: c.w35, marginTop: 1 }}>{description}</p>}
+          <p style={{ fontSize: 13, fontWeight: 500, color: c.text }}>
+            {label}
+          </p>
+          {description && (
+            <p style={{ fontSize: 11, color: c.w35, marginTop: 1 }}>
+              {description}
+            </p>
+          )}
         </div>
-        <p style={{ fontSize: 12, fontWeight: 500, color: c.w30, fontFamily: "monospace", letterSpacing: "0.04em", textTransform: "uppercase", marginRight: 4 }}>
+        <p
+          style={{
+            fontSize: 12,
+            fontWeight: 500,
+            color: c.w30,
+            fontFamily: "monospace",
+            letterSpacing: "0.04em",
+            textTransform: "uppercase",
+            marginRight: 4,
+          }}
+        >
           {value}
         </p>
         <ChevronDown

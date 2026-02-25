@@ -10,7 +10,13 @@ type Props = {
   seek: (t: number) => void;
 };
 
-export function Lyrics({ lyrics, active_idx, lyrics_ref, active_ref, seek }: Props) {
+export function Lyrics({
+  lyrics,
+  active_idx,
+  lyrics_ref,
+  active_ref,
+  seek,
+}: Props) {
   return (
     <div style={{ flex: 1, position: "relative" }}>
       <div
