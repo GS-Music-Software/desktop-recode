@@ -40,6 +40,9 @@ input[type="range"] { -webkit-appearance: none; appearance: none; background: tr
 input[type="range"]::-webkit-slider-runnable-track { height: 4px; border-radius: 2px; }
 input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; width: 12px; height: 12px; border-radius: 50%; background: #fff; margin-top: -4px; opacity: 0; transition: opacity 0.15s; }
 input[type="range"]:hover::-webkit-slider-thumb { opacity: 1; }
+.avatar-crop-slider::-webkit-slider-runnable-track { background: rgba(var(--font-r),var(--font-g),var(--font-b),0.12); }
+.avatar-crop-slider::-webkit-slider-thumb { opacity: 1; background: var(--accent); width: 14px; height: 14px; margin-top: -5px; }
+.avatar-crop-slider:hover::-webkit-slider-thumb { transform: scale(1.15); }
 @keyframes spin { to { transform: rotate(360deg); } }
 @keyframes iv-in { from { opacity: 0; transform: translateY(100%); } to { opacity: 1; transform: translateY(0); } }
 @keyframes iv-out { from { opacity: 1; transform: translateY(0); } to { opacity: 0; transform: translateY(100%); } }

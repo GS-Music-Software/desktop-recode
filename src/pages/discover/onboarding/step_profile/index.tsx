@@ -1,6 +1,7 @@
 import { useState, useRef } from "react";
 import { Camera, User } from "lucide-react";
 import { use_profile } from "@/ctx";
+import { AvatarCrop } from "@/components/profile_edit_modal/avatar_crop";
 import { c } from "@/theme";
 
 type Props = { on_done: () => void };
@@ -9,14 +10,16 @@ export function StepProfile({ on_done }: Props) {
   const { name, avatar, set_name, set_avatar, finish_onboarding } = use_profile();
   const [input, set_input] = useState(name);
   const [hov_avatar, set_hov_avatar] = useState(false);
+  const [crop_src, set_crop_src] = useState<string | null>(null);
   const file_ref = useRef<HTMLInputElement>(null);
 
   function handle_file(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
     const reader = new FileReader();
-    reader.onload = ev => set_avatar(ev.target?.result as string);
+    reader.onload = ev => set_crop_src(ev.target?.result as string);
     reader.readAsDataURL(file);
+    e.target.value = "";
   }
 
   function finish() {
@@ -102,6 +105,14 @@ export function StepProfile({ on_done }: Props) {
           Skip for now
         </button>
       </div>
+
+      {crop_src && (
+        <AvatarCrop
+          src={crop_src}
+          on_apply={data_url => { set_avatar(data_url); set_crop_src(null); }}
+          on_cancel={() => set_crop_src(null)}
+        />
+      )}
     </div>
   );
 }

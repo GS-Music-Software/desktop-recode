@@ -1,27 +1,42 @@
+import { useState } from "react";
 import { SbNav, NAV_LIB, NAV_OTHER } from "./sb_nav";
 import { SbPlaylists } from "./sb_playlists";
+import { ProfileEditModal } from "@/components/profile_edit_modal";
 import { use_profile } from "@/ctx";
 import { User } from "lucide-react";
 import { c } from "@/theme";
 
 function ProfileCard() {
   const { name, avatar } = use_profile();
+  const [show_edit, set_show_edit] = useState(false);
 
   return (
-    <div style={{ padding: "12px 14px", borderTop: `1px solid ${c.w07}`, flexShrink: 0, display: "flex", alignItems: "center", gap: 10 }}>
-      <div style={{ width: 32, height: 32, borderRadius: "50%", background: c.w08, border: `1px solid ${c.w10}`, flexShrink: 0, overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center" }}>
-        {avatar
-          ? <img src={avatar} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-          : <User size={16} color={c.w35} />
-        }
-      </div>
-      <div style={{ minWidth: 0 }}>
-        <p style={{ fontSize: 13, fontWeight: 600, color: c.text, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-          {name || "You"}
-        </p>
-        <p style={{ fontSize: 11, color: c.w30, marginTop: 1 }}>Member</p>
-      </div>
-    </div>
+    <>
+      <button
+        onClick={() => set_show_edit(true)}
+        style={{
+          padding: "12px 14px", borderTop: `1px solid ${c.w07}`, flexShrink: 0,
+          display: "flex", alignItems: "center", gap: 10, width: "100%",
+          transition: "background 0.15s",
+        }}
+        onMouseEnter={e => (e.currentTarget.style.background = c.w05)}
+        onMouseLeave={e => (e.currentTarget.style.background = "transparent")}
+      >
+        <div style={{ width: 32, height: 32, borderRadius: "50%", background: c.w08, border: `1px solid ${c.w10}`, flexShrink: 0, overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center" }}>
+          {avatar
+            ? <img src={avatar} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+            : <User size={16} color={c.w35} />
+          }
+        </div>
+        <div style={{ minWidth: 0, textAlign: "left" }}>
+          <p style={{ fontSize: 13, fontWeight: 600, color: c.text, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+            {name || "You"}
+          </p>
+          <p style={{ fontSize: 11, color: c.w30, marginTop: 1 }}>Member</p>
+        </div>
+      </button>
+      {show_edit && <ProfileEditModal on_close={() => set_show_edit(false)} />}
+    </>
   );
 }
 
