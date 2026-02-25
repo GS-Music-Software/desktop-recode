@@ -213,6 +213,9 @@ export function SettingsProv({ children }: { children: ReactNode }) {
     try {
       const tokens = await invoke<SpTokens>("sp_authorize", { clientId: cid });
       _set_sp_tokens(tokens);
+    } catch (e) {
+      message(`Spotify connection failed:\n${e}`, { title: "Spotify Error", kind: "error" });
+      throw e;
     } finally {
       _set_sp_loading(false);
     }
