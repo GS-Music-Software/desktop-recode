@@ -1,7 +1,7 @@
 import { createContext, useContext, useState, useEffect, type ReactNode } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { message } from "@tauri-apps/plugin-dialog";
-import { set_eq_all, set_pitch as audio_set_pitch, EQ_FREQS } from "@/lib";
+import { set_eq_all, set_pitch as audio_set_pitch, set_crossfade as audio_set_cf, EQ_FREQS } from "@/lib";
 
 export type EqPreset = { name: string; gains: number[] };
 
@@ -76,6 +76,12 @@ type SettingsState = {
   set_pitch: (v: number) => void;
   exp_volume: boolean;
   set_exp_volume: (v: boolean) => void;
+  amll_lyrics: boolean;
+  set_amll_lyrics: (v: boolean) => void;
+  amll_word_sync: boolean;
+  set_amll_word_sync: (v: boolean) => void;
+  crossfade: number;
+  set_crossfade: (v: number) => void;
   custom_presets: EqPreset[];
   save_preset: (name: string, gains: number[]) => void;
   delete_preset: (name: string) => void;
@@ -109,6 +115,12 @@ export function SettingsProv({ children }: { children: ReactNode }) {
     return s ? parseFloat(s) || 1 : 1;
   });
   const [exp_volume, _set_exp_vol] = useState(() => localStorage.getItem("exp_volume") === "1");
+  const [amll_lyrics, _set_amll] = useState(() => localStorage.getItem("amll_lyrics") !== "0");
+  const [amll_word_sync, _set_amll_ws] = useState(() => localStorage.getItem("amll_word_sync") === "1");
+  const [crossfade, _set_cf] = useState(() => {
+    const s = localStorage.getItem("crossfade");
+    return s ? Math.max(0, Math.min(12, parseFloat(s) || 0)) : 0;
+  });
   const [custom_presets, _set_custom_presets] = useState<EqPreset[]>(load_custom_presets);
 
   useEffect(() => {
@@ -125,6 +137,10 @@ export function SettingsProv({ children }: { children: ReactNode }) {
   }, [pitch]);
 
   useEffect(() => {
+    audio_set_cf(crossfade);
+  }, [crossfade]);
+
+  useEffect(() => {
     if (!tray_enabled) {
       invoke("tray_set", { enabled: false }).catch(e => console.error("tray_set off:", e));
       return;
@@ -139,34 +155,27 @@ export function SettingsProv({ children }: { children: ReactNode }) {
     });
   }, [tray_enabled]);
 
-  function set_immersive_bg(v: boolean) {
-    localStorage.setItem("immersive_bg", v ? "1" : "0");
-    _set_bg(v);
+  function persist_bool(key: string, v: boolean, setter: (v: boolean) => void) {
+    localStorage.setItem(key, v ? "1" : "0");
+    setter(v);
   }
+
+  const set_immersive_bg = (v: boolean) => persist_bool("immersive_bg", v, _set_bg);
+  const set_eq_enabled = (v: boolean) => persist_bool("eq_enabled", v, _set_enabled);
+  const set_discord_rpc = (v: boolean) => persist_bool("discord_rpc", v, _set_rpc);
+  const set_tray_enabled = (v: boolean) => persist_bool("tray_enabled", v, _set_tray);
+  const set_exp_volume = (v: boolean) => persist_bool("exp_volume", v, _set_exp_vol);
+  const set_amll_lyrics = (v: boolean) => persist_bool("amll_lyrics", v, _set_amll);
+  const set_amll_word_sync = (v: boolean) => persist_bool("amll_word_sync", v, _set_amll_ws);
 
   function set_eq_bands(gains: number[]) {
     localStorage.setItem("eq_bands", JSON.stringify(gains));
     _set_bands(gains);
   }
 
-  function set_eq_enabled(v: boolean) {
-    localStorage.setItem("eq_enabled", v ? "1" : "0");
-    _set_enabled(v);
-  }
-
-  function set_discord_rpc(v: boolean) {
-    localStorage.setItem("discord_rpc", v ? "1" : "0");
-    _set_rpc(v);
-  }
-
   function set_rpc_opts(o: RpcOpts) {
     localStorage.setItem("rpc_opts", JSON.stringify(o));
     _set_rpc_opts(o);
-  }
-
-  function set_tray_enabled(v: boolean) {
-    localStorage.setItem("tray_enabled", v ? "1" : "0");
-    _set_tray(v);
   }
 
   function set_pitch(v: number) {
@@ -175,9 +184,10 @@ export function SettingsProv({ children }: { children: ReactNode }) {
     _set_pitch(clamped);
   }
 
-  function set_exp_volume(v: boolean) {
-    localStorage.setItem("exp_volume", v ? "1" : "0");
-    _set_exp_vol(v);
+  function set_crossfade(v: number) {
+    const clamped = Math.max(0, Math.min(12, Math.round(v)));
+    localStorage.setItem("crossfade", String(clamped));
+    _set_cf(clamped);
   }
 
   function save_preset(name: string, gains: number[]) {
@@ -200,10 +210,16 @@ export function SettingsProv({ children }: { children: ReactNode }) {
   }
 
   async function sp_token(): Promise<string> {
-    const fresh = await invoke<SpTokens | null>("sp_fresh_token");
-    if (!fresh) throw new Error("not connected to spotify");
-    _set_sp_tokens(fresh);
-    return fresh.access_token;
+    try {
+      const fresh = await invoke<SpTokens | null>("sp_fresh_token");
+      if (!fresh) throw new Error("not connected to spotify");
+      _set_sp_tokens(fresh);
+      return fresh.access_token;
+    } catch (e) {
+      _set_sp_tokens(null);
+      message(`Spotify session expired. Please reconnect your account in Settings.\n\n${e}`, { title: "Spotify Error", kind: "error" });
+      throw e;
+    }
   }
 
   async function sp_connect(override_id?: string) {
@@ -227,7 +243,7 @@ export function SettingsProv({ children }: { children: ReactNode }) {
   }
 
   return (
-    <Ctx.Provider value={{ immersive_bg, set_immersive_bg, eq_bands, set_eq_bands, eq_enabled, set_eq_enabled, discord_rpc, set_discord_rpc, rpc_opts, set_rpc_opts, tray_enabled, set_tray_enabled, sp_client_id, set_sp_client_id, sp_tokens, sp_token, sp_connect, sp_disconnect, sp_loading, pitch, set_pitch, exp_volume, set_exp_volume, custom_presets, save_preset, delete_preset }}>
+    <Ctx.Provider value={{ immersive_bg, set_immersive_bg, eq_bands, set_eq_bands, eq_enabled, set_eq_enabled, discord_rpc, set_discord_rpc, rpc_opts, set_rpc_opts, tray_enabled, set_tray_enabled, sp_client_id, set_sp_client_id, sp_tokens, sp_token, sp_connect, sp_disconnect, sp_loading, pitch, set_pitch, exp_volume, set_exp_volume, amll_lyrics, set_amll_lyrics, amll_word_sync, set_amll_word_sync, crossfade, set_crossfade, custom_presets, save_preset, delete_preset }}>
       {children}
     </Ctx.Provider>
   );

@@ -98,8 +98,7 @@ export function PlProv({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     audio_set_vol(volume);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [volume]);
 
   const play = useCallback((track: TTrack, q?: TTrack[]) => {
     set_station(null);

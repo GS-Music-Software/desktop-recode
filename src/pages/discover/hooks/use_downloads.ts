@@ -5,6 +5,23 @@ import { use_lib, use_toast } from "@/ctx";
 import type { DlState, DzTrack } from "../types";
 import type { SpTrack } from "@/components/spotify/types";
 import type { YtTrack, YtPlaylistResult } from "@/components/youtube/types";
+import {
+  invoke_download,
+  meta_from_dz,
+  meta_from_sp,
+  meta_from_yt,
+  sp_track_key,
+  yt_track_key,
+  type DlMeta,
+} from "./dl_invoke";
+import {
+  handle_sp_batch_done,
+  handle_yt_batch_done,
+  handle_album_batch_done,
+  type SpBatch,
+  type YtBatch,
+  type AlbumBatch,
+} from "./dl_batch";
 
 export function use_downloads() {
   const { music_dir, load_library, load_playlists } = use_lib();
@@ -30,24 +47,11 @@ export function use_downloads() {
   const id_map = useRef<Map<number, number>>(new Map());
   const sp_id_map = useRef<Map<number, string>>(new Map());
   const yt_id_map = useRef<Map<number, string>>(new Map());
-  const dl_meta = useRef<
-    Map<number, { title: string; artist: string; cover_url: string }>
-  >(new Map());
+  const dl_meta = useRef<Map<number, DlMeta>>(new Map());
   const sp_dl_all_running = useRef(false);
-  const sp_batch = useRef<{
-    ids: Set<number>;
-    total: number;
-    done: number;
-    toast_id: string;
-  } | null>(null);
-  const yt_batch = useRef<{
-    ids: Set<number>;
-    total: number;
-    done: number;
-    toast_id: string;
-    pl_name: string;
-    paths: string[];
-  } | null>(null);
+  const sp_batch = useRef<SpBatch | null>(null);
+  const yt_batch = useRef<YtBatch | null>(null);
+  const album_batch = useRef<AlbumBatch | null>(null);
   const yt_pl_name = useRef("");
 
   const lib_ref = useRef({ music_dir, load_library, load_playlists });
@@ -61,7 +65,6 @@ export function use_downloads() {
     const { music_dir: dir, load_library: load } = lib_ref.current;
     if (!dir) return;
     load(dir);
-
     if (rescan_timer.current) clearTimeout(rescan_timer.current);
     rescan_timer.current = setTimeout(() => load(dir), 1500);
   }
@@ -78,7 +81,7 @@ export function use_downloads() {
           return next;
         });
         const sp_key = sp_id_map.current.get(payload.id);
-        if (sp_key) {
+        if (sp_key)
           set_sp_dl_keys((prev) =>
             new Map(prev).set(sp_key, {
               pct: payload.pct,
@@ -86,9 +89,8 @@ export function use_downloads() {
               err: null,
             }),
           );
-        }
         const yt_key = yt_id_map.current.get(payload.id);
-        if (yt_key) {
+        if (yt_key)
           set_yt_dl_keys((prev) =>
             new Map(prev).set(yt_key, {
               pct: payload.pct,
@@ -96,7 +98,7 @@ export function use_downloads() {
               err: null,
             }),
           );
-        }
+
         const batch = sp_batch.current ?? yt_batch.current;
         if (batch && batch.ids.has(payload.id)) return;
         const meta = dl_meta.current.get(payload.id);
@@ -111,6 +113,7 @@ export function use_downloads() {
         }
       },
     );
+
     const u2 = listen<{ id: number; path: string | null; err: string | null }>(
       "dl_done",
       ({ payload }) => {
@@ -126,7 +129,7 @@ export function use_downloads() {
           return next;
         });
         const sp_key = sp_id_map.current.get(payload.id);
-        if (sp_key) {
+        if (sp_key)
           set_sp_dl_keys((prev) =>
             new Map(prev).set(sp_key, {
               pct: 100,
@@ -134,9 +137,8 @@ export function use_downloads() {
               err: payload.err,
             }),
           );
-        }
         const yt_key_done = yt_id_map.current.get(payload.id);
-        if (yt_key_done) {
+        if (yt_key_done)
           set_yt_dl_keys((prev) =>
             new Map(prev).set(yt_key_done, {
               pct: 100,
@@ -144,64 +146,41 @@ export function use_downloads() {
               err: payload.err,
             }),
           );
-        }
+
         if (sp_batch.current && sp_batch.current.ids.has(payload.id)) {
-          const batch = sp_batch.current;
-          batch.done++;
-          const pct = Math.round((batch.done / batch.total) * 100);
-          toast_ref.current.update(batch.toast_id, {
-            type: batch.done >= batch.total ? "success" : "progress",
-            pct,
-            title:
-              batch.done >= batch.total
-                ? `Downloaded ${batch.total} tracks`
-                : `Downloading`,
-            sub: `${batch.done} / ${batch.total} tracks`,
-          });
-          if (batch.done >= batch.total) {
-            rescan();
+          if (handle_sp_batch_done(sp_batch.current, toast_ref.current, rescan))
             sp_batch.current = null;
-          }
           return;
         }
         if (yt_batch.current && yt_batch.current.ids.has(payload.id)) {
-          const batch = yt_batch.current;
-          batch.done++;
-          if (payload.path && !payload.err) batch.paths.push(payload.path);
-          const pct = Math.round((batch.done / batch.total) * 100);
-          toast_ref.current.update(batch.toast_id, {
-            type: batch.done >= batch.total ? "success" : "progress",
-            pct,
-            title:
-              batch.done >= batch.total
-                ? `Downloaded ${batch.total} tracks`
-                : `Downloading`,
-            sub: `${batch.done} / ${batch.total} tracks`,
-          });
-          if (batch.done >= batch.total) {
-            rescan();
-            if (batch.paths.length > 0) {
-              const name = batch.pl_name || "YouTube Playlist";
-              (async () => {
-                try {
-                  const pl = await invoke<{ id: string }>("pl_create", {
-                    name,
-                    description: null,
-                    cover: null,
-                  });
-                  for (const p of batch.paths) {
-                    await invoke("pl_add_track", { id: pl.id, trackPath: p });
-                  }
-                  await lib_ref.current.load_playlists();
-                } catch (e) {
-                  console.error("yt_batch playlist create:", e);
-                }
-              })();
-            }
+          if (
+            handle_yt_batch_done(
+              yt_batch.current,
+              payload.path,
+              payload.err,
+              toast_ref.current,
+              rescan,
+              lib_ref.current,
+            )
+          )
             yt_batch.current = null;
-          }
           return;
         }
+        if (album_batch.current && album_batch.current.ids.has(payload.id)) {
+          if (
+            handle_album_batch_done(
+              album_batch.current,
+              payload.path,
+              payload.err,
+              toast_ref.current,
+              rescan,
+              lib_ref.current,
+            )
+          )
+            album_batch.current = null;
+          return;
+        }
+
         const meta = dl_meta.current.get(payload.id);
         if (meta) {
           toast_ref.current.update(`dl_${payload.id}`, {
@@ -215,6 +194,7 @@ export function use_downloads() {
         if (!payload.err) rescan();
       },
     );
+
     const u3 = listen<{
       phase: string;
       done: number;
@@ -233,11 +213,7 @@ export function use_downloads() {
     if (existing && !existing.err) return;
     const dl_id = dl_id_ref.current++;
     id_map.current.set(dl_id, track.id);
-    dl_meta.current.set(dl_id, {
-      title: track.title,
-      artist: track.artist,
-      cover_url: track.cover_url,
-    });
+    dl_meta.current.set(dl_id, meta_from_dz(track));
     set_downloads((prev) =>
       new Map(prev).set(track.id, { pct: 0, done: false, err: null }),
     );
@@ -249,23 +225,74 @@ export function use_downloads() {
       sub: track.artist,
       cover_url: track.cover_url,
     });
-    invoke("download_track", {
-      id: dl_id,
-      artist: track.artist,
-      title: track.title,
-      album: track.album,
-      coverUrl: track.cover_url,
-      duration: track.duration,
-      saveDir: music_dir ?? undefined,
-    }).catch((e) => {
+    invoke_download(
+      dl_id,
+      track.artist,
+      track.title,
+      track.album,
+      track.cover_url,
+      track.duration,
+      music_dir ?? undefined,
+    ).catch((e) =>
       set_downloads((prev) =>
         new Map(prev).set(track.id, { pct: 0, done: false, err: String(e) }),
-      );
-    });
+      ),
+    );
   }
 
-  function sp_track_key(t: SpTrack, i: number) {
-    return `${t.title}::${t.artist}::${i}`;
+  function dl_track_batch(track: DzTrack, dl_id: number) {
+    id_map.current.set(dl_id, track.id);
+    dl_meta.current.set(dl_id, meta_from_dz(track));
+    album_batch.current?.ids.add(dl_id);
+    set_downloads((prev) =>
+      new Map(prev).set(track.id, { pct: 0, done: false, err: null }),
+    );
+    invoke_download(
+      dl_id,
+      track.artist,
+      track.title,
+      track.album,
+      track.cover_url,
+      track.duration,
+      music_dir ?? undefined,
+    ).catch((e) =>
+      set_downloads((prev) =>
+        new Map(prev).set(track.id, { pct: 0, done: false, err: String(e) }),
+      ),
+    );
+  }
+
+  async function dl_album_all(
+    tracks: DzTrack[],
+    pl_name: string | null,
+    cover_url?: string,
+  ) {
+    const to_dl = tracks.filter((t) => {
+      const existing = downloads.get(t.id);
+      return !existing || existing.err;
+    });
+    if (!to_dl.length) return;
+    const toast_id = `album_batch_${Date.now()}`;
+    album_batch.current = {
+      ids: new Set(),
+      total: to_dl.length,
+      done: 0,
+      toast_id,
+      pl_name: pl_name ?? "",
+      cover_url: cover_url ?? "",
+      paths: [],
+    };
+    push({
+      id: toast_id,
+      type: "progress",
+      pct: 0,
+      title: "Downloading",
+      sub: `0 / ${to_dl.length} tracks`,
+    });
+    for (const t of to_dl) {
+      dl_track_batch(t, dl_id_ref.current++);
+      await new Promise((r) => setTimeout(r, 300));
+    }
   }
 
   function dl_sp_track(t: SpTrack, idx: number, batch = false) {
@@ -274,11 +301,7 @@ export function use_downloads() {
     if (existing && !existing.err) return;
     const dl_id = dl_id_ref.current++;
     sp_id_map.current.set(dl_id, key);
-    dl_meta.current.set(dl_id, {
-      title: t.title,
-      artist: t.artist,
-      cover_url: t.cover_url,
-    });
+    dl_meta.current.set(dl_id, meta_from_sp(t));
     set_sp_dl_keys((prev) =>
       new Map(prev).set(key, { pct: 0, done: false, err: null }),
     );
@@ -294,15 +317,15 @@ export function use_downloads() {
         cover_url: t.cover_url,
       });
     }
-    invoke("download_track", {
-      id: dl_id,
-      artist: t.artist,
-      title: t.title,
-      album: t.album,
-      coverUrl: t.cover_url,
-      duration: t.duration,
-      saveDir: music_dir ?? undefined,
-    }).catch((e) => {
+    invoke_download(
+      dl_id,
+      t.artist,
+      t.title,
+      t.album,
+      t.cover_url,
+      t.duration,
+      music_dir ?? undefined,
+    ).catch((e) => {
       console.error("dl_sp_track:", e);
       set_sp_dl_keys((prev) =>
         new Map(prev).set(key, { pct: 0, done: false, err: "failed" }),
@@ -337,8 +360,7 @@ export function use_downloads() {
       sub: `0 / ${to_dl.length} tracks`,
     });
     for (const t of to_dl) {
-      const idx = tracks.indexOf(t);
-      dl_sp_track(t, idx, true);
+      dl_sp_track(t, tracks.indexOf(t), true);
       await new Promise((r) => setTimeout(r, 300));
     }
     sp_dl_all_running.current = false;
@@ -360,21 +382,13 @@ export function use_downloads() {
     }
   }
 
-  function yt_track_key(t: YtTrack, i: number) {
-    return `yt::${t.title}::${t.artist}::${i}`;
-  }
-
   function dl_yt_track(t: YtTrack, idx: number, batch = false) {
     const key = yt_track_key(t, idx);
     const existing = yt_dl_keys.get(key);
     if (existing && !existing.err) return;
     const dl_id = dl_id_ref.current++;
     yt_id_map.current.set(dl_id, key);
-    dl_meta.current.set(dl_id, {
-      title: t.title,
-      artist: t.artist,
-      cover_url: t.cover_url,
-    });
+    dl_meta.current.set(dl_id, meta_from_yt(t));
     set_yt_dl_keys((prev) =>
       new Map(prev).set(key, { pct: 0, done: false, err: null }),
     );
@@ -390,15 +404,15 @@ export function use_downloads() {
         cover_url: t.cover_url,
       });
     }
-    invoke("download_track", {
-      id: dl_id,
-      artist: t.artist,
-      title: t.title,
-      album: t.album || "",
-      coverUrl: t.cover_url,
-      duration: t.duration,
-      saveDir: music_dir ?? undefined,
-    }).catch((e) => {
+    invoke_download(
+      dl_id,
+      t.artist,
+      t.title,
+      t.album || "",
+      t.cover_url,
+      t.duration,
+      music_dir ?? undefined,
+    ).catch((e) => {
       console.error("dl_yt_track:", e);
       set_yt_dl_keys((prev) =>
         new Map(prev).set(key, { pct: 0, done: false, err: "failed" }),
@@ -430,8 +444,7 @@ export function use_downloads() {
       sub: `0 / ${to_dl.length} tracks`,
     });
     for (const t of to_dl) {
-      const idx = tracks.indexOf(t);
-      dl_yt_track(t, idx, true);
+      dl_yt_track(t, tracks.indexOf(t), true);
       await new Promise((r) => setTimeout(r, 300));
     }
   }
@@ -439,6 +452,7 @@ export function use_downloads() {
   return {
     downloads,
     dl_track,
+    dl_album_all,
     sp_dl_keys,
     dl_sp_track,
     dl_sp_all,

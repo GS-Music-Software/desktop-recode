@@ -6,7 +6,7 @@ import { c } from "@/theme";
 
 const MIN_DB = -12;
 const MAX_DB = 12;
-const TRACK_H = 160;
+const TRACK_H = 120;
 
 function fmt_freq(hz: number): string {
   return hz >= 1000 ? `${hz / 1000}k` : `${hz}`;

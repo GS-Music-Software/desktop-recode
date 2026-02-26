@@ -8,6 +8,7 @@ import { PlaylistDetail } from "./library/playlist_detail";
 import { Settings } from "./settings";
 import { About } from "./settings/about";
 import { ThemeEditor } from "./settings/theme_editor";
+import { Keybinds } from "./settings/keybinds";
 import { Discover } from "./discover";
 import { Audio } from "./audio";
 import { RadioPage } from "./radio";
@@ -29,6 +30,7 @@ export function Router() {
       case "radio": return <RadioPage />;
       case "playlist_detail": return <PlaylistDetail />;
       case "theme_editor": return <ThemeEditor />;
+      case "keybinds": return <Keybinds />;
     }
   })();
 

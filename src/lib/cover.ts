@@ -1,10 +1,12 @@
 import { invoke } from "@tauri-apps/api/core";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 const cache = new Map<string, string | null>();
 
 export function use_cover(path: string | null): string | null {
   const [src, set_src] = useState<string | null>(() => path ? (cache.get(path) ?? null) : null);
+  const prev = useRef<string | null>(src);
+  if (src) prev.current = src;
 
   useEffect(() => {
     if (!path) { set_src(null); return; }
@@ -12,7 +14,6 @@ export function use_cover(path: string | null): string | null {
       set_src(cache.get(path) ?? null);
       return;
     }
-    set_src(null);
     invoke<string | null>("get_cover", { path }).then((res) => {
       cache.set(path, res);
       set_src(res);
@@ -22,5 +23,5 @@ export function use_cover(path: string | null): string | null {
     });
   }, [path]);
 
-  return src;
+  return src ?? prev.current;
 }

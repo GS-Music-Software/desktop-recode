@@ -1,6 +1,7 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { use_lib, use_pl, use_settings, use_profile, use_theme } from "@/ctx";
-import { use_cover, use_rpc } from "@/lib";
+import { use_cover, use_rpc, load_keybinds, combo_from_event, get_time } from "@/lib";
+import type { KeybindAction, KeybindBinds } from "@/lib";
 import { Sidebar } from "@/components/layout/sidebar";
 import { PlBar } from "@/components/player/pl_bar";
 import { Router } from "@/pages/router";
@@ -63,6 +64,51 @@ export function App() {
     window.addEventListener("mouseup", on_mouse);
     return () => window.removeEventListener("mouseup", on_mouse);
   }, [nav_back, nav_fwd]);
+
+  const { toggle, next, prev, set_volume, volume, seek, toggle_shuffle, toggle_repeat } = use_pl();
+  const binds_ref = useRef<KeybindBinds>(load_keybinds());
+  const vol_ref = useRef(volume);
+  const prev_vol = useRef(volume);
+  vol_ref.current = volume;
+
+  useEffect(() => {
+    function reload() { binds_ref.current = load_keybinds(); }
+    window.addEventListener("keybinds_changed", reload);
+    return () => window.removeEventListener("keybinds_changed", reload);
+  }, []);
+
+  useEffect(() => {
+    function on_key(e: KeyboardEvent) {
+      const tag = (e.target as HTMLElement)?.tagName;
+      if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT") return;
+
+      const combo = combo_from_event(e);
+      const b = binds_ref.current;
+      const lookup = new Map<string, KeybindAction>();
+      for (const [action, key] of Object.entries(b)) lookup.set(key, action as KeybindAction);
+      const action = lookup.get(combo);
+      if (!action) return;
+
+      e.preventDefault();
+      switch (action) {
+        case "play_pause": toggle(); break;
+        case "next": next(); break;
+        case "prev": prev(); break;
+        case "vol_up": set_volume(Math.min(1, vol_ref.current + 0.05)); break;
+        case "vol_down": set_volume(Math.max(0, vol_ref.current - 0.05)); break;
+        case "mute":
+          if (vol_ref.current > 0) { prev_vol.current = vol_ref.current; set_volume(0); }
+          else set_volume(prev_vol.current || 1);
+          break;
+        case "seek_fwd": seek(get_time() + 5); break;
+        case "seek_back": seek(Math.max(0, get_time() - 5)); break;
+        case "shuffle": toggle_shuffle(); break;
+        case "repeat": toggle_repeat(); break;
+      }
+    }
+    window.addEventListener("keydown", on_key);
+    return () => window.removeEventListener("keydown", on_key);
+  }, [toggle, next, prev, set_volume, seek, toggle_shuffle, toggle_repeat]);
 
   if (!onboarding_done) {
     return (

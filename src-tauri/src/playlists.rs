@@ -121,6 +121,13 @@ pub async fn pl_rename(id: String, name: String) -> Result<(), String> {
 }
 
 #[tauri::command]
+pub async fn pl_set_cover(id: String, cover: String) -> Result<(), String> {
+    let mut pl = read_pl(&id)?;
+    pl.cover = Some(cover);
+    write_pl(&pl)
+}
+
+#[tauri::command]
 pub async fn pl_delete(id: String) -> Result<(), String> {
     let p = pl_path(&id);
     if p.exists() {

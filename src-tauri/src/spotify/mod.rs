@@ -45,7 +45,14 @@ pub async fn sp_fresh_token() -> Result<Option<Tokens>, String> {
     let Some(cid) = tokens::load_client_id() else {
         return Err("no client id saved".into());
     };
-    let refreshed = auth::refresh(&cid, &t).await?;
+    let refreshed = match auth::refresh(&cid, &t).await {
+        Ok(r) => r,
+        Err(e) => {
+            eprintln!("[spotify] refresh failed, clearing tokens: {e}");
+            tokens::clear_tokens();
+            return Err(e);
+        }
+    };
     tokens::save_tokens(&refreshed);
     Ok(Some(refreshed))
 }

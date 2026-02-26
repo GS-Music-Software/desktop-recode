@@ -118,7 +118,12 @@ export function PlaylistDetail() {
           display: "flex", gap: 28, padding: "32px 32px 24px",
           alignItems: "flex-end",
         }}>
-          <PlCover cover={pl.cover} is_favs={pl.id === "__favorites"} />
+          <PlCover
+            cover={pl.cover}
+            is_favs={pl.id === "__favorites"}
+            pl_id={pl.id}
+            on_cover_change={(cover) => set_pl(prev => prev ? { ...prev, cover } : null)}
+          />
           <div style={{ display: "flex", flexDirection: "column", gap: 8, minWidth: 0 }}>
             <h1 style={{
               fontSize: 32, fontWeight: 800, color: c.text, letterSpacing: "-0.5px",

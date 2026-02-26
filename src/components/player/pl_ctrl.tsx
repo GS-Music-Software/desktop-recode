@@ -1,7 +1,8 @@
 import { use_pl } from "@/ctx";
 import { format_duration } from "@/lib";
-import { Play, Pause, SkipBack, SkipForward, Shuffle, Repeat, Repeat1 } from "lucide-react";
+import { Shuffle, Repeat, Repeat1 } from "lucide-react";
 import { c } from "@/theme";
+import { SkipBackIcon, SkipFwdIcon, PlayIcon, PauseIcon } from "./icons";
 
 export function PlCtrl() {
   const { current, current_station, playing, time, toggle, next, prev, seek, shuffle, repeat, toggle_shuffle, toggle_repeat } = use_pl();
@@ -18,22 +19,19 @@ export function PlCtrl() {
           </button>
         )}
         {!is_live && (
-          <button onClick={prev} style={{ color: c.w60 }}>
-            <SkipBack size={20} fill="currentColor" />
+          <button onClick={prev} style={{ display: "flex" }}>
+            <SkipBackIcon size={20} color={c.w60} />
           </button>
         )}
         <button
           onClick={toggle}
-          style={{ width: 36, height: 36, borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", background: c.white, color: c.black, flexShrink: 0 }}
+          style={{ width: 36, height: 36, borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", background: c.white, flexShrink: 0 }}
         >
-          {playing
-            ? <Pause size={16} fill="currentColor" strokeWidth={0} />
-            : <Play size={16} fill="currentColor" strokeWidth={0} style={{ marginLeft: 2 }} />
-          }
+          {playing ? <PauseIcon size={16} color={c.black} /> : <PlayIcon size={16} color={c.black} />}
         </button>
         {!is_live && (
-          <button onClick={next} style={{ color: c.w60 }}>
-            <SkipForward size={20} fill="currentColor" />
+          <button onClick={next} style={{ display: "flex" }}>
+            <SkipFwdIcon size={20} color={c.w60} />
           </button>
         )}
         {!is_live && (

@@ -16,10 +16,10 @@ function rpc_cover(artist: string, title: string) {
   return invoke<string | null>("rpc_cover", { artist, title });
 }
 
-function resolve(field: RpcField, title: string, artist: string, album: string, playing: boolean): string {
+function resolve(field: RpcField, title: string, artist: string, album: string): string {
   switch (field) {
     case "title": return title;
-    case "artist": return playing ? `by ${artist}` : `by ${artist} (Paused)`;
+    case "artist": return artist;
     case "album": return album;
     case "title_artist": return `${title} - ${artist}`;
     case "artist_album": return `${artist} - ${album}`;
@@ -47,8 +47,8 @@ export function use_rpc(enabled: boolean, opts?: RpcOpts) {
     const p = playing_ref.current;
     const o = opts_ref.current ?? { detail: "title" as RpcField, state: "artist" as RpcField, show_ts: true, show_art: true };
     if (!c) return;
-    const detail = resolve(o.detail, c.title, c.artist, c.album, p);
-    const state = resolve(o.state, c.title, c.artist, c.album, p);
+    const detail = resolve(o.detail, c.title, c.artist, c.album);
+    const state = resolve(o.state, c.title, c.artist, c.album);
     const large_txt = c.album || c.title;
     rpc_set(detail, state, large_txt, o.show_art ? art_ref.current : null, p, o.show_ts, get_time(), c.duration).catch(e => console.error("rpc:", e));
   }

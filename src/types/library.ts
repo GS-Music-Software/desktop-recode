@@ -15,7 +15,7 @@ export type TArtist = {
   tracks: TTrack[];
 };
 
-export type TView = "songs" | "albums" | "artists" | "settings" | "album_detail" | "artist_detail" | "discover" | "audio" | "about" | "radio" | "playlist_detail" | "theme_editor";
+export type TView = "songs" | "albums" | "artists" | "settings" | "album_detail" | "artist_detail" | "discover" | "audio" | "about" | "radio" | "playlist_detail" | "theme_editor" | "keybinds";
 
 export type TPlaylist = {
   id: string;

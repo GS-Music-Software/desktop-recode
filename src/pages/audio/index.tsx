@@ -1,13 +1,14 @@
 import { use_settings } from "@/ctx";
 import { Eq } from "./eq";
 import { Pitch } from "./pitch";
+import { Crossfade } from "./crossfade";
 import { c } from "@/theme";
 
 export function Audio() {
   const { eq_enabled, set_eq_enabled } = use_settings();
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
+    <div style={{ display: "flex", flexDirection: "column", flex: 1, minHeight: 0 }}>
       <div className="page-header" style={{ height: 52, display: "flex", alignItems: "center", padding: "0 24px", flexShrink: 0, borderBottom: `1px solid ${c.w07}`, gap: 12 }} data-tauri-drag-region>
         <h1 style={{ fontSize: 20, fontWeight: 700, letterSpacing: "-0.3px", color: c.text, flex: 1 }}>Audio</h1>
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
@@ -30,9 +31,16 @@ export function Audio() {
         </div>
       </div>
 
-      <div style={{ flex: 1, overflowY: "auto", padding: "28px 32px", display: "flex", flexDirection: "column", gap: 28 }}>
-        <Eq />
-        <Pitch />
+      <div style={{ flex: 1, minHeight: 0, overflowY: "auto", padding: "24px 28px 48px" }}>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 340px", gap: 20 }}>
+          <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+            <Eq />
+          </div>
+          <div style={{ display: "flex", flexDirection: "column", gap: 16, justifyContent: "center", minHeight: "100%" }}>
+            <Pitch />
+            <Crossfade />
+          </div>
+        </div>
       </div>
     </div>
   );

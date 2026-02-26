@@ -21,7 +21,7 @@ import { c } from "@/theme";
 export function Discover() {
   const { sp_tokens, sp_token } = use_settings();
   const {
-    downloads, dl_track,
+    downloads, dl_track, dl_album_all,
     sp_dl_keys, dl_sp_track, dl_sp_all,
     yt_tracks, yt_loading, yt_progress, yt_dl_keys, yt_import, dl_yt_track, dl_yt_all,
   } = use_downloads();
@@ -264,6 +264,7 @@ export function Discover() {
             loading={drill_loading}
             downloads={downloads}
             on_download={dl_track}
+            on_download_all={dl_album_all}
           />
         )}
 

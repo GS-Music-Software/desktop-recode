@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { use_lib, use_settings, use_profile } from "@/ctx";
 import { open } from "@tauri-apps/plugin-dialog";
-import { FolderOpen, Wallpaper, RotateCcw, Info, ChevronRight, AppWindow, Volume2, Palette } from "lucide-react";
+import { FolderOpen, Wallpaper, RotateCcw, Info, ChevronRight, AppWindow, Volume2, Palette, Type, Keyboard } from "lucide-react";
 import { SpotifySetup } from "@/components/spotify/setup";
 import { SpotifyConnect } from "@/components/spotify/connect";
 import { Toggle } from "./toggle";
@@ -48,7 +48,7 @@ function RowIcon({ icon: Icon }: { icon: typeof FolderOpen }) {
 
 export function Settings() {
   const { music_dir, load_library, set_view } = use_lib();
-  const { immersive_bg, set_immersive_bg, exp_volume, set_exp_volume, discord_rpc, set_discord_rpc, rpc_opts, set_rpc_opts, tray_enabled, set_tray_enabled, sp_client_id, set_sp_client_id, sp_tokens, sp_connect, sp_disconnect, sp_loading } = use_settings();
+  const { immersive_bg, set_immersive_bg, exp_volume, set_exp_volume, amll_lyrics, set_amll_lyrics, amll_word_sync, set_amll_word_sync, discord_rpc, set_discord_rpc, rpc_opts, set_rpc_opts, tray_enabled, set_tray_enabled, sp_client_id, set_sp_client_id, sp_tokens, sp_connect, sp_disconnect, sp_loading } = use_settings();
   const { reset } = use_profile();
   const [sp_setup_open, set_sp_setup_open] = useState(false);
 
@@ -158,12 +158,55 @@ export function Settings() {
 
                 <div style={sep} />
 
+                <div style={row}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                    <RowIcon icon={Type} />
+                    <div>
+                      <p style={{ fontSize: 13, fontWeight: 500, color: c.text }}>New Lyrics</p>
+                      <p style={{ fontSize: 11, color: c.w35, marginTop: 1 }}>Try out the new immersive lyrics screen</p>
+                    </div>
+                  </div>
+                  <Toggle on={amll_lyrics} set_on={set_amll_lyrics} />
+                </div>
+
+                {amll_lyrics && (
+                  <>
+                    <div style={sep} />
+                    <div style={{ ...row, paddingLeft: 34 }}>
+                      <div>
+                        <p style={{ fontSize: 13, fontWeight: 500, color: c.text }}>Word-Level Sync <span style={{ color: c.w35, fontWeight: 400 }}>(Buggy)</span></p>
+                        <p style={{ fontSize: 11, color: c.w35, marginTop: 1 }}>Animate lyrics word-by-word instead of line-by-line</p>
+                      </div>
+                      <Toggle on={amll_word_sync} set_on={set_amll_word_sync} />
+                    </div>
+                  </>
+                )}
+
+                <div style={sep} />
+
                 <div style={{ ...row, cursor: "pointer" }} onClick={() => set_view("theme_editor")}>
                   <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
                     <RowIcon icon={Palette} />
                     <div>
                       <p style={{ fontSize: 13, fontWeight: 500, color: c.text }}>Theme</p>
                       <p style={{ fontSize: 11, color: c.w35, marginTop: 1 }}>Customize colors</p>
+                    </div>
+                  </div>
+                  <ChevronRight size={14} color={c.w20} />
+                </div>
+
+              </div>
+            </div>
+
+            <div>
+              <p style={lbl}>Controls</p>
+              <div style={card}>
+                <div style={{ ...row, cursor: "pointer" }} onClick={() => set_view("keybinds")}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                    <RowIcon icon={Keyboard} />
+                    <div>
+                      <p style={{ fontSize: 13, fontWeight: 500, color: c.text }}>Keybinds</p>
+                      <p style={{ fontSize: 11, color: c.w35, marginTop: 1 }}>Keyboard shortcuts</p>
                     </div>
                   </div>
                   <ChevronRight size={14} color={c.w20} />

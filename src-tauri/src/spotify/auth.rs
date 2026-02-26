@@ -103,7 +103,7 @@ pub async fn authorize(client_id: &str) -> Result<Tokens, String> {
 
     eprintln!("[spotify] exchanging code for tokens");
     let client = reqwest::Client::new();
-    let token_res: TokenRes = client
+    let token_resp = client
         .post(TOKEN_URL)
         .form(&[
             ("grant_type", "authorization_code"),
@@ -114,22 +114,31 @@ pub async fn authorize(client_id: &str) -> Result<Tokens, String> {
         ])
         .send()
         .await
-        .map_err(|e| { eprintln!("[spotify] token req failed: {e}"); format!("token req: {e}") })?
-        .json()
-        .await
+        .map_err(|e| { eprintln!("[spotify] token req failed: {e}"); format!("token req: {e}") })?;
+    let status = token_resp.status();
+    let token_body = token_resp.text().await
+        .map_err(|e| { eprintln!("[spotify] token read failed: {e}"); format!("token read: {e}") })?;
+    eprintln!("[spotify] token response ({status}): {token_body}");
+    if !status.is_success() {
+        return Err(format!("token exchange failed ({}): {}", status, &token_body[..token_body.len().min(200)]));
+    }
+    let token_res: TokenRes = serde_json::from_str(&token_body)
         .map_err(|e| { eprintln!("[spotify] token parse failed: {e}"); format!("token parse: {e}") })?;
 
     eprintln!("[spotify] fetching profile");
-    let profile_body = reqwest::Client::new()
+    let profile_resp = client
         .get(format!("{API}/me"))
         .header("Authorization", format!("Bearer {}", token_res.access_token))
         .send()
         .await
-        .map_err(|e| { eprintln!("[spotify] profile req failed: {e}"); format!("profile req: {e}") })?
-        .text()
-        .await
+        .map_err(|e| { eprintln!("[spotify] profile req failed: {e}"); format!("profile req: {e}") })?;
+    let status = profile_resp.status();
+    let profile_body = profile_resp.text().await
         .map_err(|e| { eprintln!("[spotify] profile read failed: {e}"); format!("profile read: {e}") })?;
-    eprintln!("[spotify] profile response: {profile_body}");
+    eprintln!("[spotify] profile response ({status}): {profile_body}");
+    if !status.is_success() {
+        return Err(format!("profile fetch failed ({}): {}", status, &profile_body[..profile_body.len().min(200)]));
+    }
     let profile: ProfileRes = serde_json::from_str(&profile_body)
         .map_err(|e| { eprintln!("[spotify] profile parse failed: {e}"); format!("profile parse: {e}") })?;
 
@@ -145,7 +154,7 @@ pub async fn authorize(client_id: &str) -> Result<Tokens, String> {
 pub async fn refresh(client_id: &str, tokens: &Tokens) -> Result<Tokens, String> {
     eprintln!("[spotify] refreshing access token");
     let client = reqwest::Client::new();
-    let token_res: TokenRes = client
+    let refresh_resp = client
         .post(TOKEN_URL)
         .form(&[
             ("grant_type", "refresh_token"),
@@ -154,9 +163,15 @@ pub async fn refresh(client_id: &str, tokens: &Tokens) -> Result<Tokens, String>
         ])
         .send()
         .await
-        .map_err(|e| { eprintln!("[spotify] refresh req failed: {e}"); format!("refresh req: {e}") })?
-        .json()
-        .await
+        .map_err(|e| { eprintln!("[spotify] refresh req failed: {e}"); format!("refresh req: {e}") })?;
+    let status = refresh_resp.status();
+    let refresh_body = refresh_resp.text().await
+        .map_err(|e| { eprintln!("[spotify] refresh read failed: {e}"); format!("refresh read: {e}") })?;
+    eprintln!("[spotify] refresh response ({status}): {refresh_body}");
+    if !status.is_success() {
+        return Err(format!("token refresh failed ({}): {}", status, &refresh_body[..refresh_body.len().min(200)]));
+    }
+    let token_res: TokenRes = serde_json::from_str(&refresh_body)
         .map_err(|e| { eprintln!("[spotify] refresh parse failed: {e}"); format!("refresh parse: {e}") })?;
 
     eprintln!("[spotify] token refreshed successfully");
