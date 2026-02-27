@@ -152,6 +152,13 @@ export function Amll({
 
   return (
     <div style={{ position: "absolute", inset: 0, overflow: "hidden", background: "#111", fontFamily: FONT }}>
+      {cover && (
+        <img src={cover} style={{
+          position: "absolute", inset: "-30%", width: "160%", height: "160%",
+          objectFit: "cover", filter: "blur(80px) saturate(1.8) brightness(0.25)",
+          zIndex: 0,
+        }} />
+      )}
       <div style={{ position: "absolute", inset: 0, zIndex: 0 }}>
         <BackgroundRender
           album={cover ?? undefined}
@@ -160,9 +167,10 @@ export function Amll({
           fps={30}
           flowSpeed={2}
           renderScale={0.4}
-          style={{ width: "100%", height: "100%" }}
+          style={{ width: "100%", height: "100%", opacity: 0.7 }}
         />
       </div>
+      <div style={{ position: "absolute", inset: 0, zIndex: 0, background: "rgba(0,0,0,0.3)" }} />
 
       <div style={{
         position: "relative", zIndex: 1, height: "100%",
