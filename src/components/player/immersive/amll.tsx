@@ -169,7 +169,7 @@ export function Amll({
         display: "grid",
         gridTemplateRows: "auto 1fr",
         gridTemplateColumns: "0.38fr 0.62fr",
-        padding: "0 48px 36px",
+        padding: "0 clamp(48px, 4vw, 80px) 36px",
         isolation: "isolate",
       }}>
         <div style={{
@@ -184,7 +184,7 @@ export function Amll({
         <div style={{
           gridColumn: "1", gridRow: "2",
           display: "flex", flexDirection: "column", justifyContent: "center",
-          gap: 20, paddingRight: 48, maxWidth: 380,
+          gap: "clamp(16px, 2vh, 24px)", paddingRight: 48, maxWidth: "45vh",
         }}>
           <div
             key={art_key}
@@ -248,7 +248,7 @@ export function Amll({
             </div>
           </div>
 
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", maxWidth: 280, margin: "0 auto", width: "100%" }}>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", width: "100%" }}>
             <button onClick={tog_shuffle} style={{ ...btn, padding: 6 }} {...press}>
               <Shuffle size={18} color={shuffle ? c.accent : "rgba(255,255,255,0.5)"} strokeWidth={2} />
             </button>

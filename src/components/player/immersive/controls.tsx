@@ -115,7 +115,7 @@ export function Controls({
   return (
     <div
       style={{
-        width: 340,
+        width: "clamp(280px, 28vw, 45vh)",
         flexShrink: 0,
         display: "flex",
         flexDirection: "column",
@@ -126,8 +126,8 @@ export function Controls({
       <div
         key={art_key}
         style={{
-          width: 340,
-          height: 340,
+          width: "100%",
+          aspectRatio: "1",
           borderRadius: 18,
           overflow: "hidden",
           flexShrink: 0,

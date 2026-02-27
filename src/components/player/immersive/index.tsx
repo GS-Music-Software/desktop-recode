@@ -146,9 +146,17 @@ export function Immersive({ open, on_close }: Props) {
     if (!open) return;
     function on_key(e: KeyboardEvent) {
       if (e.key === "Escape") close();
+      if (e.key === "F11") {
+        e.preventDefault();
+        if (document.fullscreenElement) document.exitFullscreen();
+        else document.documentElement.requestFullscreen();
+      }
     }
     window.addEventListener("keydown", on_key);
-    return () => window.removeEventListener("keydown", on_key);
+    return () => {
+      window.removeEventListener("keydown", on_key);
+      if (document.fullscreenElement) document.exitFullscreen();
+    };
   }, [open]);
 
   if (!open && !closing) return null;
