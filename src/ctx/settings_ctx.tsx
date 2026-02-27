@@ -1,7 +1,7 @@
 import { createContext, useContext, useState, useEffect, type ReactNode } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { message } from "@tauri-apps/plugin-dialog";
-import { set_eq_all, set_pitch as audio_set_pitch, set_crossfade as audio_set_cf, EQ_FREQS } from "@/lib";
+import { set_eq_all, set_pitch as audio_set_pitch, set_crossfade as audio_set_cf, set_spatial as audio_set_spatial, EQ_FREQS } from "@/lib";
 
 export type EqPreset = { name: string; gains: number[] };
 
@@ -82,6 +82,8 @@ type SettingsState = {
   set_amll_word_sync: (v: boolean) => void;
   crossfade: number;
   set_crossfade: (v: number) => void;
+  spatial_audio: boolean;
+  set_spatial_audio: (v: boolean) => void;
   custom_presets: EqPreset[];
   save_preset: (name: string, gains: number[]) => void;
   delete_preset: (name: string) => void;
@@ -121,6 +123,7 @@ export function SettingsProv({ children }: { children: ReactNode }) {
     const s = localStorage.getItem("crossfade");
     return s ? Math.max(0, Math.min(12, parseFloat(s) || 0)) : 0;
   });
+  const [spatial_audio, _set_spatial] = useState(() => localStorage.getItem("spatial_audio") === "1");
   const [custom_presets, _set_custom_presets] = useState<EqPreset[]>(load_custom_presets);
 
   useEffect(() => {
@@ -139,6 +142,10 @@ export function SettingsProv({ children }: { children: ReactNode }) {
   useEffect(() => {
     audio_set_cf(crossfade);
   }, [crossfade]);
+
+  useEffect(() => {
+    audio_set_spatial(spatial_audio);
+  }, [spatial_audio]);
 
   useEffect(() => {
     if (!tray_enabled) {
@@ -167,6 +174,7 @@ export function SettingsProv({ children }: { children: ReactNode }) {
   const set_exp_volume = (v: boolean) => persist_bool("exp_volume", v, _set_exp_vol);
   const set_amll_lyrics = (v: boolean) => persist_bool("amll_lyrics", v, _set_amll);
   const set_amll_word_sync = (v: boolean) => persist_bool("amll_word_sync", v, _set_amll_ws);
+  const set_spatial_audio = (v: boolean) => persist_bool("spatial_audio", v, _set_spatial);
 
   function set_eq_bands(gains: number[]) {
     localStorage.setItem("eq_bands", JSON.stringify(gains));
@@ -243,7 +251,7 @@ export function SettingsProv({ children }: { children: ReactNode }) {
   }
 
   return (
-    <Ctx.Provider value={{ immersive_bg, set_immersive_bg, eq_bands, set_eq_bands, eq_enabled, set_eq_enabled, discord_rpc, set_discord_rpc, rpc_opts, set_rpc_opts, tray_enabled, set_tray_enabled, sp_client_id, set_sp_client_id, sp_tokens, sp_token, sp_connect, sp_disconnect, sp_loading, pitch, set_pitch, exp_volume, set_exp_volume, amll_lyrics, set_amll_lyrics, amll_word_sync, set_amll_word_sync, crossfade, set_crossfade, custom_presets, save_preset, delete_preset }}>
+    <Ctx.Provider value={{ immersive_bg, set_immersive_bg, eq_bands, set_eq_bands, eq_enabled, set_eq_enabled, discord_rpc, set_discord_rpc, rpc_opts, set_rpc_opts, tray_enabled, set_tray_enabled, sp_client_id, set_sp_client_id, sp_tokens, sp_token, sp_connect, sp_disconnect, sp_loading, pitch, set_pitch, exp_volume, set_exp_volume, amll_lyrics, set_amll_lyrics, amll_word_sync, set_amll_word_sync, crossfade, set_crossfade, spatial_audio, set_spatial_audio, custom_presets, save_preset, delete_preset }}>
       {children}
     </Ctx.Provider>
   );

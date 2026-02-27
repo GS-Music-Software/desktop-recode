@@ -1,4 +1,5 @@
 import { invoke } from "@tauri-apps/api/core";
+import { create_spatial, get_spatial_nodes, is_spatial_enabled, set_spatial_enabled } from "./spatial";
 
 type AudioCb = {
   on_time?: (t: number) => void;
@@ -50,7 +51,16 @@ function wire_deck(el: HTMLAudioElement): Deck {
   let node: AudioNode = src;
   for (const f of filters) { node.connect(f); node = f; }
   node.connect(gain);
-  gain.connect(ctx.destination);
+
+  if (is_spatial_enabled()) {
+    let spatial = get_spatial_nodes();
+    if (!spatial) spatial = create_spatial(ctx);
+    gain.connect(spatial.input);
+    spatial.output.connect(ctx.destination);
+  } else {
+    gain.connect(ctx.destination);
+  }
+
   return { el, gain, filters };
 }
 
@@ -250,4 +260,26 @@ export function set_pitch(rate: number) {
   const clamped = Math.max(0.25, Math.min(2, rate));
   if (_a) { _a.el.playbackRate = clamped; _a.el.preservesPitch = false; }
   if (_b) { _b.el.playbackRate = clamped; _b.el.preservesPitch = false; }
+}
+
+export function set_spatial(on: boolean) {
+  set_spatial_enabled(on);
+  const ctx = get_ctx();
+
+  function rewire(deck: Deck | null) {
+    if (!deck?.gain) return;
+    deck.gain.disconnect();
+    if (on) {
+      let spatial = get_spatial_nodes();
+      if (!spatial) spatial = create_spatial(ctx);
+      spatial.output.disconnect();
+      deck.gain.connect(spatial.input);
+      spatial.output.connect(ctx.destination);
+    } else {
+      deck.gain.connect(ctx.destination);
+    }
+  }
+
+  rewire(_a);
+  rewire(_b);
 }
