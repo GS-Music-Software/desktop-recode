@@ -14,7 +14,7 @@ pub struct Playlist {
     pub tracks: Vec<String>,
 }
 
-fn pl_dir() -> PathBuf {
+pub(crate) fn pl_dir() -> PathBuf {
     let d = dirs::data_dir()
         .unwrap_or_else(|| dirs::home_dir().unwrap_or_default().join(".local/share"))
         .join("gs-music")
@@ -23,25 +23,25 @@ fn pl_dir() -> PathBuf {
     d
 }
 
-fn pl_path(id: &str) -> PathBuf {
+pub(crate) fn pl_path(id: &str) -> PathBuf {
     pl_dir().join(format!("{id}.json"))
 }
 
-fn read_pl(id: &str) -> Result<Playlist, String> {
+pub(crate) fn read_pl(id: &str) -> Result<Playlist, String> {
     let p = pl_path(id);
     let data = fs::read_to_string(&p).map_err(|e| format!("read: {e}"))?;
     serde_json::from_str(&data).map_err(|e| format!("parse: {e}"))
 }
 
-fn write_pl(pl: &Playlist) -> Result<(), String> {
+pub(crate) fn write_pl(pl: &Playlist) -> Result<(), String> {
     let p = pl_path(&pl.id);
     let data = serde_json::to_string_pretty(pl).map_err(|e| format!("json: {e}"))?;
     fs::write(&p, data).map_err(|e| format!("write: {e}"))
 }
 
-const FAVS_ID: &str = "__favorites";
+pub(crate) const FAVS_ID: &str = "__favorites";
 
-fn ensure_favs() {
+pub(crate) fn ensure_favs() {
     let p = pl_path(FAVS_ID);
     if !p.exists() {
         let pl = Playlist {

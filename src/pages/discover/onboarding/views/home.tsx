@@ -1,15 +1,17 @@
 import { Card } from "../migrate/card";
 import { SpotifyIcon, YoutubeIcon } from "../migrate/icons";
 import { c } from "@/theme";
+import gs_icon from "@/assets/gs_icon.webp";
 
 type Props = {
   did_migrate: boolean;
   on_spotify: () => void;
   on_youtube: () => void;
+  on_gs_import: () => void;
   on_next: () => void;
 };
 
-export function HomeView({ did_migrate, on_spotify, on_youtube, on_next }: Props) {
+export function HomeView({ did_migrate, on_spotify, on_youtube, on_gs_import, on_next }: Props) {
   return (
     <>
       <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
@@ -35,6 +37,13 @@ export function HomeView({ did_migrate, on_spotify, on_youtube, on_next }: Props
           color={c.youtube}
           icon={<YoutubeIcon />}
           on_click={on_youtube}
+        />
+        <Card
+          label="Import from GS Music Export"
+          sub="Restore a previous backup"
+          color="#6366f1"
+          icon={<img src={gs_icon} width={26} height={26} style={{ borderRadius: 6 }} />}
+          on_click={on_gs_import}
         />
       </div>
 

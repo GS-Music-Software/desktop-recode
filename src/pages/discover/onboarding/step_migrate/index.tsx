@@ -12,6 +12,7 @@ import { YtTracksView } from "../views/yt_tracks";
 import { MigratingView } from "../views/migrating";
 import { DoneView } from "../views/done";
 import { HomeView } from "../views/home";
+import { use_account_export, ImportOverlay } from "@/pages/settings/account_export";
 
 type View =
   | "home"
@@ -50,6 +51,7 @@ export function StepMigrate({ on_next }: Props) {
   const [mig_done, set_mig_done] = useState(0);
   const [mig_current, set_mig_current] = useState("");
   const [did_migrate, set_did_migrate] = useState(false);
+  const { import_account: gs_import, import_state } = use_account_export();
 
   const dl_id_ref = useRef(0);
   const batch_ids = useRef<Set<number>>(new Set());
@@ -453,11 +455,21 @@ export function StepMigrate({ on_next }: Props) {
             did_migrate={did_migrate}
             on_spotify={open_spotify}
             on_youtube={() => set_view("yt_input")}
+            on_gs_import={async () => {
+              await gs_import(true);
+              set_did_migrate(true);
+              set_view("done");
+            }}
             on_next={on_next}
           />
         );
     }
   }
 
-  return <div style={box}>{render_view()}</div>;
+  return (
+    <div style={box}>
+      {render_view()}
+      {import_state && <ImportOverlay state={import_state} />}
+    </div>
+  );
 }

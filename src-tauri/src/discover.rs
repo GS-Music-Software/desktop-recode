@@ -457,6 +457,11 @@ async fn dz_lookup(artist: &str, title: &str) -> Option<(String, String)> {
     None
 }
 
+#[tauri::command]
+pub async fn lookup_cover(artist: String, title: String) -> Option<String> {
+    dz_lookup(&artist, &title).await.map(|(cover, _)| cover)
+}
+
 #[derive(Serialize, Clone)]
 pub struct YtImportProgress {
     pub phase: String,
