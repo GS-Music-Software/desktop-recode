@@ -16,6 +16,7 @@ import {
   Music,
 } from "lucide-react";
 import { c } from "@/theme";
+import { Marquee } from "@/components/shared/marquee";
 
 type Tab = "lyrics" | "queue";
 
@@ -166,20 +167,9 @@ export function Controls({
         key={`info-${cur?.path}`}
         style={{ animation: "fade-up 0.4s ease forwards" }}
       >
-        <p
-          style={{
-            fontSize: 24,
-            fontWeight: 700,
-            color: c.white,
-            lineHeight: 1.25,
-            marginBottom: 4,
-            overflow: "hidden",
-            textOverflow: "ellipsis",
-            whiteSpace: "nowrap",
-          }}
-        >
+        <Marquee style={{ fontSize: 24, fontWeight: 700, color: c.white, lineHeight: 1.25, marginBottom: 4 }}>
           {cur?.title ?? "\u2014"}
-        </p>
+        </Marquee>
         <p
           style={{
             fontSize: 14,

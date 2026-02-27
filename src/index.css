@@ -114,3 +114,5 @@ input[type="range"]:hover::-webkit-slider-thumb { opacity: 1; }
 .picker-enter { animation: picker-open 0.25s cubic-bezier(0.4,0,0.2,1) forwards; overflow: hidden; }
 @keyframes picker-close { from { opacity: 1; max-height: 400px; transform: translateY(0); } to { opacity: 0; max-height: 0; transform: translateY(-8px); } }
 .picker-exit { animation: picker-close 0.2s cubic-bezier(0.4,0,0.2,1) forwards; overflow: hidden; pointer-events: none; }
+@keyframes marquee { 0%,15% { transform: translateX(0); } 100% { transform: translateX(var(--marquee-dist)); } }
+.marquee-scroll { animation: marquee var(--marquee-dur) linear infinite; }

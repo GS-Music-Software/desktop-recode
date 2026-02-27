@@ -10,6 +10,7 @@ import { c } from "@/theme";
 import { SkipBackIcon, SkipFwdIcon, PlayIcon, PauseIcon } from "../icons";
 import { TrackCtxMenu } from "@/components/shared/track_ctx_menu";
 import { Art } from "@/components/shared/art";
+import { Marquee } from "@/components/shared/marquee";
 import type { TTrack } from "@/types";
 
 type Tab = "lyrics" | "queue";
@@ -205,9 +206,9 @@ export function Amll({
 
           <div key={`info-${cur?.path}`} style={{ animation: "fade-up 0.4s ease forwards", display: "flex", alignItems: "center", gap: 10 }}>
             <div style={{ flex: 1, minWidth: 0 }}>
-              <p style={{ fontSize: 20, fontWeight: 700, color: "#fff", lineHeight: 1.3, marginBottom: 3, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+              <Marquee style={{ fontSize: 20, fontWeight: 700, color: "#fff", lineHeight: 1.3, marginBottom: 3 }}>
                 {cur?.title ?? "\u2014"}
-              </p>
+              </Marquee>
               <p style={{ fontSize: 13, color: "rgba(255,255,255,0.45)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", fontWeight: 500 }}>
                 {cur?.artist ?? ""}
               </p>
