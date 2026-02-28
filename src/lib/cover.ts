@@ -14,13 +14,15 @@ export function use_cover(path: string | null): string | null {
       set_src(cache.get(path) ?? null);
       return;
     }
+    let stale = false;
     invoke<string | null>("get_cover", { path }).then((res) => {
       cache.set(path, res);
-      set_src(res);
+      if (!stale) set_src(res);
     }).catch(() => {
       cache.set(path, null);
-      set_src(null);
+      if (!stale) set_src(null);
     });
+    return () => { stale = true; };
   }, [path]);
 
   return src ?? prev.current;
