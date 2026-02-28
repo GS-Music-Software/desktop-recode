@@ -137,6 +137,7 @@ export function ThemeProv({ children }: { children: ReactNode }) {
     const next = custom_presets.filter((p) => p.name !== name);
     localStorage.setItem("theme_custom_presets", JSON.stringify(next));
     _set_custom_presets(next);
+    reset_theme();
   }
 
   return (

@@ -18,6 +18,9 @@ export function PlaylistDetail() {
   const [hov_idx, set_hov_idx] = useState<number | null>(null);
   const [sort, set_sort] = useState<SortMode>("recent");
   const [query, set_query] = useState("");
+  const [drag, set_drag] = useState<{ idx: number; drop_idx: number } | null>(null);
+  const did_move = useRef(false);
+  const track_list_ref = useRef<HTMLDivElement>(null);
   const scroll_ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -71,6 +74,52 @@ export function PlaylistDetail() {
     estimateSize: () => ROW_H,
     overscan: 20,
   });
+
+  const can_drag = sort === "recent" && !query.trim();
+
+  const get_drop_idx = useCallback((mouse_y: number) => {
+    if (!track_list_ref.current) return 0;
+    const rect = track_list_ref.current.getBoundingClientRect();
+    const idx = Math.round((mouse_y - rect.top) / ROW_H);
+    return Math.max(0, Math.min(resolved.length, idx));
+  }, [resolved.length]);
+
+  useEffect(() => {
+    if (!drag) return;
+
+    const on_move = (e: MouseEvent) => {
+      did_move.current = true;
+      set_drag(prev => prev ? { ...prev, drop_idx: get_drop_idx(e.clientY) } : null);
+    };
+
+    const on_up = () => {
+      set_drag(prev => {
+        if (!prev) return null;
+        if (did_move.current && pl) {
+          let from = prev.idx;
+          let to = prev.drop_idx;
+          if (from !== to && from !== to - 1) {
+            const paths = resolved.map(t => t.path);
+            const [moved] = paths.splice(from, 1);
+            if (to > from) to--;
+            paths.splice(to, 0, moved);
+            const storage = [...paths].reverse();
+            set_pl(p => p ? { ...p, tracks: storage } : null);
+            invoke("pl_reorder_tracks", { id: pl.id, tracks: storage }).catch(e => console.error("pl_reorder_tracks:", e));
+          }
+        }
+        did_move.current = false;
+        return null;
+      });
+    };
+
+    window.addEventListener("mousemove", on_move);
+    window.addEventListener("mouseup", on_up);
+    return () => {
+      window.removeEventListener("mousemove", on_move);
+      window.removeEventListener("mouseup", on_up);
+    };
+  }, [drag, resolved, pl, get_drop_idx]);
 
   const remove_track = useCallback(async (path: string) => {
     if (!pl) return;
@@ -170,15 +219,21 @@ export function PlaylistDetail() {
         )}
 
         {resolved.length > 0 && (
-          <div style={{ position: "relative", height: virt.getTotalSize(), padding: "0 0 8px" }}>
+          <div ref={track_list_ref} style={{ position: "relative", height: virt.getTotalSize(), padding: "0 0 8px" }}>
             {virt.getVirtualItems().map(vi => {
               const t = resolved[vi.index];
               return (
                 <div
                   key={t.path}
+                  onMouseDown={can_drag ? (e) => {
+                    if (e.button !== 0) return;
+                    did_move.current = false;
+                    set_drag({ idx: vi.index, drop_idx: vi.index });
+                  } : undefined}
                   style={{
                     position: "absolute", top: 0, left: 0, width: "100%",
                     height: vi.size, transform: `translateY(${vi.start}px)`,
+                    userSelect: drag ? "none" : undefined,
                   }}
                 >
                   <PlTrackRow
@@ -186,7 +241,7 @@ export function PlaylistDetail() {
                     active={cur_path === t.path}
                     fav={is_fav(t.path)}
                     hov={hov_idx === vi.index}
-                    on_play={() => play(t, resolved)}
+                    on_play={() => { if (!did_move.current) play(t, resolved); }}
                     on_enter={() => set_hov_idx(vi.index)}
                     on_leave={() => set_hov_idx(null)}
                     on_remove={() => remove_track(t.path)}
@@ -197,6 +252,18 @@ export function PlaylistDetail() {
                 </div>
               );
             })}
+            {drag && can_drag && drag.drop_idx !== drag.idx && drag.drop_idx !== drag.idx + 1 && (
+              <div style={{
+                position: "absolute",
+                top: drag.drop_idx * ROW_H - 1,
+                left: 36, right: 36,
+                height: 2,
+                background: "var(--accent)",
+                borderRadius: 1,
+                zIndex: 10,
+                pointerEvents: "none",
+              }} />
+            )}
           </div>
         )}
 

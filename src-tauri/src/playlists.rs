@@ -92,8 +92,26 @@ pub async fn pl_list() -> Result<Vec<Playlist>, String> {
             }
         }
     }
+    let order_path = dir.join("_order.json");
+    if let Ok(data) = fs::read_to_string(&order_path) {
+        if let Ok(ids) = serde_json::from_str::<Vec<String>>(&data) {
+            let mut map: std::collections::HashMap<String, usize> = std::collections::HashMap::new();
+            for (i, id) in ids.iter().enumerate() {
+                map.insert(id.clone(), i);
+            }
+            out.sort_by_key(|pl| map.get(&pl.id).copied().unwrap_or(usize::MAX));
+            return Ok(out);
+        }
+    }
     out.sort_by(|a, b| a.name.to_lowercase().cmp(&b.name.to_lowercase()));
     Ok(out)
+}
+
+#[tauri::command]
+pub async fn pl_reorder(ids: Vec<String>) -> Result<(), String> {
+    let path = pl_dir().join("_order.json");
+    let data = serde_json::to_string(&ids).map_err(|e| format!("json: {e}"))?;
+    fs::write(&path, data).map_err(|e| format!("write: {e}"))
 }
 
 #[tauri::command]
@@ -155,6 +173,13 @@ pub async fn pl_add_track(id: String, track_path: String) -> Result<(), String> 
 pub async fn pl_remove_track(id: String, track_path: String) -> Result<(), String> {
     let mut pl = read_pl(&id)?;
     pl.tracks.retain(|t| t != &track_path);
+    write_pl(&pl)
+}
+
+#[tauri::command]
+pub async fn pl_reorder_tracks(id: String, tracks: Vec<String>) -> Result<(), String> {
+    let mut pl = read_pl(&id)?;
+    pl.tracks = tracks;
     write_pl(&pl)
 }
 

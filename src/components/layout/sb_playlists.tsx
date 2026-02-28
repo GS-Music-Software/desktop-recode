@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { use_lib } from "@/ctx";
 import { invoke } from "@tauri-apps/api/core";
 import { TPlaylist } from "@/types";
@@ -107,10 +107,64 @@ function PlItem({ name, active, on_click, on_ctx }: { name: string; active: bool
   );
 }
 
+type DragState = {
+  idx: number;
+  drop_idx: number;
+};
+
 export function SbPlaylists() {
-  const { playlists, selected_playlist, view, set_view, set_album, set_artist, set_playlist, load_playlists } = use_lib();
+  const { playlists, selected_playlist, view, set_view, set_album, set_artist, set_playlist, load_playlists, reorder_playlists } = use_lib();
   const [show_create, set_show_create] = useState(false);
   const [ctx, set_ctx] = useState<{ x: number; y: number; pl: TPlaylist } | null>(null);
+  const [drag, set_drag] = useState<DragState | null>(null);
+  const item_refs = useRef<(HTMLDivElement | null)[]>([]);
+  const did_move = useRef(false);
+
+  const get_drop_idx = useCallback((mouse_y: number) => {
+    for (let i = 0; i < item_refs.current.length; i++) {
+      const el = item_refs.current[i];
+      if (!el) continue;
+      const rect = el.getBoundingClientRect();
+      if (mouse_y < rect.top + rect.height / 2) return i;
+    }
+    return playlists.length;
+  }, [playlists.length]);
+
+  useEffect(() => {
+    if (!drag) return;
+
+    const on_move = (e: MouseEvent) => {
+      did_move.current = true;
+      set_drag(prev => prev ? { ...prev, drop_idx: get_drop_idx(e.clientY) } : null);
+    };
+
+    const on_up = () => {
+      set_drag(prev => {
+        if (!prev) return null;
+        if (did_move.current) {
+          let from = prev.idx;
+          let to = prev.drop_idx;
+          if (from !== to && from !== to - 1) {
+            const ids = playlists.map(p => p.id);
+            const [moved] = ids.splice(from, 1);
+            if (to > from) to--;
+            ids.splice(to, 0, moved);
+            reorder_playlists(ids);
+            invoke("pl_reorder", { ids }).catch(e => console.error("pl_reorder:", e));
+          }
+        }
+        did_move.current = false;
+        return null;
+      });
+    };
+
+    window.addEventListener("mousemove", on_move);
+    window.addEventListener("mouseup", on_up);
+    return () => {
+      window.removeEventListener("mousemove", on_move);
+      window.removeEventListener("mouseup", on_up);
+    };
+  }, [drag, playlists, reorder_playlists, get_drop_idx]);
 
   const on_create = async (name: string, description: string, cover: string | null) => {
     try {
@@ -151,7 +205,7 @@ export function SbPlaylists() {
 
   return (
     <>
-      <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+      <div style={{ display: "flex", flexDirection: "column", gap: 2, position: "relative" }}>
         <PlNavBtn
           label="Create New"
           icon={Plus}
@@ -172,15 +226,45 @@ export function SbPlaylists() {
             } catch (e) { console.error("pl_favs:", e); }
           }}
         />
-        {playlists.map((pl) => (
-          <PlItem
-            key={pl.id}
-            name={pl.name}
-            active={view === "playlist_detail" && selected_playlist?.id === pl.id}
-            on_click={() => on_playlist(pl)}
-            on_ctx={(e) => on_right_click(e, pl)}
-          />
-        ))}
+        {playlists.map((pl, i) => {
+          const show_line_above = drag && drag.drop_idx === i && drag.idx !== i && drag.idx !== i - 1;
+          const show_line_below = drag && drag.drop_idx === playlists.length && i === playlists.length - 1 && drag.idx !== i;
+
+          return (
+            <div
+              key={pl.id}
+              ref={(el) => { item_refs.current[i] = el; }}
+              onMouseDown={(e) => {
+                if (e.button !== 0) return;
+                did_move.current = false;
+                set_drag({ idx: i, drop_idx: i });
+              }}
+              style={{
+                position: "relative",
+                userSelect: "none",
+              }}
+            >
+              {show_line_above && (
+                <div style={{
+                  position: "absolute", top: -2, left: 12, right: 12, height: 2,
+                  background: "var(--accent)", borderRadius: 1, zIndex: 5,
+                }} />
+              )}
+              <PlItem
+                name={pl.name}
+                active={view === "playlist_detail" && selected_playlist?.id === pl.id}
+                on_click={() => { if (!did_move.current) on_playlist(pl); }}
+                on_ctx={(e) => on_right_click(e, pl)}
+              />
+              {show_line_below && (
+                <div style={{
+                  position: "absolute", bottom: -2, left: 12, right: 12, height: 2,
+                  background: "var(--accent)", borderRadius: 1, zIndex: 5,
+                }} />
+              )}
+            </div>
+          );
+        })}
       </div>
 
       {ctx && (

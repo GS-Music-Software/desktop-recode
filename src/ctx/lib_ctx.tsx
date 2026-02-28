@@ -30,6 +30,7 @@ type LibState = {
   load_library: (path: string) => Promise<void>;
   load_playlists: () => Promise<void>;
   set_playlist: (p: TPlaylist | null) => void;
+  reorder_playlists: (ids: string[]) => void;
   nav_back: () => void;
   nav_fwd: () => void;
 };
@@ -120,6 +121,18 @@ export function LibProv({ children }: { children: ReactNode }) {
     _set_selected_playlist(p);
   }
 
+  function reorder_playlists(ids: string[]) {
+    set_playlists(prev => {
+      const map = new Map(prev.map(p => [p.id, p]));
+      const sorted: TPlaylist[] = [];
+      for (const id of ids) {
+        const pl = map.get(id);
+        if (pl) sorted.push(pl);
+      }
+      return sorted;
+    });
+  }
+
   const ld_favs = useCallback(async () => {
     try {
       const res = await invoke<TPlaylist>("pl_favs");
@@ -173,7 +186,7 @@ export function LibProv({ children }: { children: ReactNode }) {
         tracks, albums, artists, view, selected_album, selected_artist,
         music_dir, loading, err, search, can_back, can_fwd,
         playlists, selected_playlist, favs, is_fav, toggle_fav,
-        set_view, set_album, set_artist, set_search, load_library, load_playlists, set_playlist, nav_back, nav_fwd,
+        set_view, set_album, set_artist, set_search, load_library, load_playlists, set_playlist, reorder_playlists, nav_back, nav_fwd,
       }}
     >
       {children}
