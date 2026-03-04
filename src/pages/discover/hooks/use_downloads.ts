@@ -24,7 +24,7 @@ import {
 } from "./dl_batch";
 
 export function use_downloads() {
-  const { music_dir, load_library, load_playlists } = use_lib();
+  const { music_dir, rescan_library, load_playlists } = use_lib();
   const { push, update } = use_toast();
 
   const [downloads, set_downloads] = useState<Map<number, DlState>>(new Map());
@@ -54,19 +54,17 @@ export function use_downloads() {
   const album_batch = useRef<AlbumBatch | null>(null);
   const yt_pl_name = useRef("");
 
-  const lib_ref = useRef({ music_dir, load_library, load_playlists });
-  lib_ref.current = { music_dir, load_library, load_playlists };
+  const lib_ref = useRef({ music_dir, rescan_library, load_playlists });
+  lib_ref.current = { music_dir, rescan_library, load_playlists };
   const toast_ref = useRef({ push, update });
   toast_ref.current = { push, update };
 
   const rescan_timer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   function rescan() {
-    const { music_dir: dir, load_library: load } = lib_ref.current;
-    if (!dir) return;
-    load(dir);
+    lib_ref.current.rescan_library();
     if (rescan_timer.current) clearTimeout(rescan_timer.current);
-    rescan_timer.current = setTimeout(() => load(dir), 1500);
+    rescan_timer.current = setTimeout(() => lib_ref.current.rescan_library(), 1500);
   }
 
   useEffect(() => {

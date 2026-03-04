@@ -3,6 +3,13 @@ import { useEffect, useRef, useState } from "react";
 
 const cache = new Map<string, string | null>();
 
+function to_cover_url(path: string): string | null {
+  if (!path.startsWith("http://") && !path.startsWith("https://")) return null;
+  const i = path.indexOf("/api/stream/");
+  if (i === -1) return path;
+  return path.substring(0, i) + "/api/cover/" + path.substring(i + "/api/stream/".length);
+}
+
 export function use_cover(path: string | null): string | null {
   const [src, set_src] = useState<string | null>(() => path ? (cache.get(path) ?? null) : null);
   const prev = useRef<string | null>(src);
@@ -10,6 +17,12 @@ export function use_cover(path: string | null): string | null {
 
   useEffect(() => {
     if (!path) { set_src(null); return; }
+    const url = to_cover_url(path);
+    if (url !== null) {
+      cache.set(path, url);
+      set_src(url);
+      return;
+    }
     if (cache.has(path)) {
       set_src(cache.get(path) ?? null);
       return;

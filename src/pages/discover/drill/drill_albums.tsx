@@ -18,15 +18,15 @@ export function DrillAlbums({
         style={{
           display: "flex",
           alignItems: "center",
-          gap: 12,
-          padding: "12px 24px 8px",
+          gap: 14,
+          padding: "16px 24px 12px",
         }}
       >
         <img
           src={artist.picture_url}
           style={{
-            width: 48,
-            height: 48,
+            width: 56,
+            height: 56,
             borderRadius: "50%",
             objectFit: "cover",
             background: c.card,
@@ -34,14 +34,14 @@ export function DrillAlbums({
           }}
         />
         <div>
-          <p style={{ fontSize: 15, fontWeight: 700, color: c.text }}>
+          <p style={{ fontSize: 16, fontWeight: 700, color: c.text }}>
             {artist.name}
           </p>
           <p
             style={{
               fontSize: 12,
-              color: c.w40,
-              marginTop: 2,
+              color: c.w35,
+              marginTop: 3,
             }}
           >
             Albums
@@ -58,8 +58,8 @@ export function DrillAlbums({
           style={{
             display: "grid",
             gridTemplateColumns: "repeat(auto-fill, minmax(160px, 1fr))",
-            gap: 16,
-            padding: "12px 24px",
+            gap: 14,
+            padding: "8px 24px 16px",
           }}
         >
           {albums.map((a) => (
@@ -69,17 +69,19 @@ export function DrillAlbums({
               style={{
                 textAlign: "left",
                 background: c.w04,
-                borderRadius: 10,
+                borderRadius: 12,
                 overflow: "hidden",
-                border: `1px solid ${c.w07}`,
-                transition: "background 0.15s",
+                border: `1px solid ${c.w06}`,
+                transition: "background 0.15s, transform 0.15s",
               }}
-              onMouseEnter={(e) =>
-                (e.currentTarget.style.background = c.w08)
-              }
-              onMouseLeave={(e) =>
-                (e.currentTarget.style.background = c.w04)
-              }
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = c.w07;
+                e.currentTarget.style.transform = "translateY(-2px)";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = c.w04;
+                e.currentTarget.style.transform = "translateY(0)";
+              }}
             >
               <img
                 src={a.cover_url}
@@ -91,7 +93,7 @@ export function DrillAlbums({
                   background: c.card,
                 }}
               />
-              <div style={{ padding: "10px 10px 12px" }}>
+              <div style={{ padding: "10px 12px 12px" }}>
                 <p
                   style={{
                     fontSize: 13,

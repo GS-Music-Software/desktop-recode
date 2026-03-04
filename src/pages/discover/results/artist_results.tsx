@@ -12,7 +12,7 @@ export function ArtistResults({ artists, on_open }: Props) {
       style={{
         display: "grid",
         gridTemplateColumns: "repeat(auto-fill, minmax(140px, 1fr))",
-        gap: 16,
+        gap: 14,
         padding: "12px 24px",
       }}
     >
@@ -23,28 +23,30 @@ export function ArtistResults({ artists, on_open }: Props) {
           style={{
             textAlign: "center",
             background: c.w04,
-            borderRadius: 10,
+            borderRadius: 12,
             overflow: "hidden",
-            border: `1px solid ${c.w07}`,
-            padding: "16px 10px 14px",
-            transition: "background 0.15s",
+            border: `1px solid ${c.w06}`,
+            padding: "20px 10px 16px",
+            transition: "background 0.15s, transform 0.15s",
           }}
-          onMouseEnter={(e) =>
-            (e.currentTarget.style.background = c.w08)
-          }
-          onMouseLeave={(e) =>
-            (e.currentTarget.style.background = c.w04)
-          }
+          onMouseEnter={(e) => {
+            e.currentTarget.style.background = c.w07;
+            e.currentTarget.style.transform = "translateY(-2px)";
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.background = c.w04;
+            e.currentTarget.style.transform = "translateY(0)";
+          }}
         >
           <img
             src={a.picture_url}
             style={{
-              width: 80,
-              height: 80,
+              width: 88,
+              height: 88,
               borderRadius: "50%",
               objectFit: "cover",
               display: "block",
-              margin: "0 auto 10px",
+              margin: "0 auto 12px",
               background: c.card,
             }}
           />

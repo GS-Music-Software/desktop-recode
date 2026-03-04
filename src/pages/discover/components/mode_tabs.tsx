@@ -12,13 +12,13 @@ export function ModeTabs({ mode, has_spotify, on_switch }: Props) {
     <div
       style={{
         display: "flex",
-        gap: 4,
-        padding: "8px 24px 4px",
+        gap: 6,
+        padding: "6px 24px 10px",
         flexShrink: 0,
-        borderBottom: `1px solid ${c.w05}`,
+        borderBottom: `1px solid ${c.w06}`,
       }}
     >
-      {(["tracks", "albums", "artists"] as SearchMode[]).map((m) => (
+      {(["tracks", "albums", "artists", "recs"] as SearchMode[]).map((m) => (
         <button
           key={m}
           onClick={() => on_switch(m)}
@@ -29,7 +29,6 @@ export function ModeTabs({ mode, has_spotify, on_switch }: Props) {
             fontWeight: 500,
             background: mode === m ? c.accent : c.w06,
             color: mode === m ? c.white : c.w50,
-            transition: "all 0.15s",
             border: mode === m ? "none" : `1px solid ${c.w08}`,
           }}
           onMouseEnter={(e) => {
@@ -39,7 +38,7 @@ export function ModeTabs({ mode, has_spotify, on_switch }: Props) {
             if (mode !== m) e.currentTarget.style.color = c.w50;
           }}
         >
-          {m.charAt(0).toUpperCase() + m.slice(1)}
+          {m === "recs" ? "Recommendations" : m.charAt(0).toUpperCase() + m.slice(1)}
         </button>
       ))}
       {has_spotify && (
@@ -52,7 +51,6 @@ export function ModeTabs({ mode, has_spotify, on_switch }: Props) {
             fontWeight: 500,
             background: mode === "spotify" ? c.spotify : c.w06,
             color: mode === "spotify" ? c.white : c.w50,
-            transition: "all 0.15s",
             border: mode === "spotify" ? "none" : `1px solid ${c.w08}`,
           }}
           onMouseEnter={(e) => {
@@ -74,7 +72,6 @@ export function ModeTabs({ mode, has_spotify, on_switch }: Props) {
           fontWeight: 500,
           background: mode === "youtube" ? c.youtube : c.w06,
           color: mode === "youtube" ? c.white : c.w50,
-          transition: "all 0.15s",
           border: mode === "youtube" ? "none" : `1px solid ${c.w08}`,
         }}
         onMouseEnter={(e) => {

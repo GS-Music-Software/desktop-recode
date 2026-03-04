@@ -28,26 +28,26 @@ export function DrillTracks({
         style={{
           display: "flex",
           alignItems: "center",
-          gap: 12,
-          padding: "12px 24px 8px",
+          gap: 14,
+          padding: "16px 24px 12px",
         }}
       >
         <img
           src={album.cover_url}
           style={{
-            width: 56,
-            height: 56,
-            borderRadius: 8,
+            width: 60,
+            height: 60,
+            borderRadius: 10,
             objectFit: "cover",
             background: c.card,
             flexShrink: 0,
           }}
         />
         <div style={{ flex: 1, minWidth: 0 }}>
-          <p style={{ fontSize: 15, fontWeight: 700, color: c.text }}>
+          <p style={{ fontSize: 16, fontWeight: 700, color: c.text }}>
             {album.title}
           </p>
-          <p style={{ fontSize: 12, color: c.w40, marginTop: 2 }}>
+          <p style={{ fontSize: 12, color: c.w35, marginTop: 3 }}>
             {album.artist}
           </p>
         </div>
@@ -152,8 +152,10 @@ export function DrillTracks({
               style={{
                 display: "flex",
                 alignItems: "center",
-                gap: 12,
-                padding: "7px 24px",
+                gap: 14,
+                padding: "6px 24px",
+                borderRadius: 8,
+                margin: "0 8px",
                 transition: "background 0.1s",
               }}
               onMouseEnter={(e) => (e.currentTarget.style.background = c.w04)}

@@ -1,8 +1,8 @@
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { message } from "@tauri-apps/plugin-dialog";
-import { Music2 } from "lucide-react";
-import { use_settings } from "@/ctx";
+import { Music2, RefreshCw, ChevronDown } from "lucide-react";
+import { use_settings, use_lib } from "@/ctx";
 import { SpPlaylistList, SpTrackList } from "@/components/spotify/discover";
 import type { SpPlaylist, SpTrack, SpDrill } from "@/components/spotify/discover";
 import { YtUrlInput, YtTrackList } from "@/components/youtube/discover";
@@ -20,6 +20,7 @@ import { c } from "@/theme";
 
 export function Discover() {
   const { sp_tokens, sp_token } = use_settings();
+  const { artists: lib_artists, tracks: lib_tracks, playlists, favs } = use_lib();
   const {
     downloads, dl_track, dl_album_all,
     sp_dl_keys, dl_sp_track, dl_sp_all,
@@ -40,8 +41,59 @@ export function Discover() {
   const [sp_loading, set_sp_loading] = useState(false);
   const [sp_drill, set_sp_drill] = useState<SpDrill | null>(null);
 
+  const [rec_tracks, set_rec_tracks] = useState<DzTrack[]>([]);
+  const [rec_loading, set_rec_loading] = useState(false);
+  const [rec_source, set_rec_source] = useState("library");
+  const [rec_open, set_rec_open] = useState(false);
+  const rec_ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function close(e: MouseEvent) {
+      if (rec_ref.current && !rec_ref.current.contains(e.target as Node)) set_rec_open(false);
+    }
+    document.addEventListener("mousedown", close);
+    return () => document.removeEventListener("mousedown", close);
+  }, []);
+
+  const rec_source_label = rec_source === "library" ? "All Library"
+    : rec_source === "liked" ? "Liked Songs"
+    : playlists.find((p) => p.id === rec_source)?.name ?? "All Library";
+
+  function get_rec_artists(): string[] {
+    let source_tracks;
+    if (rec_source === "library") {
+      const shuffled = [...lib_artists].sort(() => Math.random() - 0.5);
+      return shuffled.slice(0, 8).map((a) => a.name);
+    } else if (rec_source === "liked") {
+      source_tracks = lib_tracks.filter((t) => favs.has(t.path));
+    } else {
+      const pl = playlists.find((p) => p.id === rec_source);
+      if (!pl) return [];
+      const paths = new Set(pl.tracks);
+      source_tracks = lib_tracks.filter((t) => paths.has(t.path));
+    }
+    const unique = [...new Set(source_tracks.map((t) => t.artist))];
+    const shuffled = unique.sort(() => Math.random() - 0.5);
+    return shuffled.slice(0, 8);
+  }
+
+  async function load_recs() {
+    const names = get_rec_artists();
+    if (!names.length) return;
+    set_rec_loading(true);
+    set_rec_tracks([]);
+    try {
+      const res = await invoke<DzTrack[]>("get_recommendations", { artists: names });
+      set_rec_tracks(res);
+    } catch {
+      set_rec_tracks([]);
+    } finally {
+      set_rec_loading(false);
+    }
+  }
+
   async function do_search(query = q, m = mode) {
-    if (!query.trim() || m === "spotify" || m === "youtube") return;
+    if (!query.trim() || m === "spotify" || m === "youtube" || m === "recs") return;
     set_searching(true);
     set_no_res(false);
     set_drill(null);
@@ -162,7 +214,7 @@ export function Discover() {
     track_results.length > 0 ||
     album_results.length > 0 ||
     artist_results.length > 0;
-  const show_empty = !has_results && !searching && !no_res && !drill && mode !== "spotify" && mode !== "youtube";
+  const show_empty = !has_results && !searching && !no_res && !drill && mode !== "spotify" && mode !== "youtube" && mode !== "recs";
 
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
@@ -213,6 +265,96 @@ export function Discover() {
           >
             No results found
           </div>
+        )}
+
+        {mode === "recs" && (
+          <>
+            <div style={{ display: "flex", alignItems: "center", padding: "4px 24px 8px", gap: 8 }}>
+              <div ref={rec_ref} style={{ position: "relative" }}>
+                <button
+                  onClick={() => set_rec_open(!rec_open)}
+                  style={{
+                    display: "flex", alignItems: "center", gap: 6,
+                    padding: "6px 12px", borderRadius: 20, fontSize: 12, fontWeight: 500,
+                    background: c.w06, color: c.text, border: `1px solid ${c.w08}`,
+                    whiteSpace: "nowrap",
+                  }}
+                >
+                  {rec_source_label}
+                  <ChevronDown size={12} style={{ opacity: 0.5 }} />
+                </button>
+                {rec_open && (
+                  <div style={{
+                    position: "absolute", top: "100%", left: 0, marginTop: 4,
+                    background: c.card, border: `1px solid ${c.w10}`,
+                    borderRadius: 12, padding: 4, zIndex: 50,
+                    minWidth: 160, maxHeight: 240, overflowY: "auto",
+                    boxShadow: "0 8px 24px rgba(0,0,0,0.4)",
+                  }}>
+                    {[
+                      { value: "library", label: "All Library" },
+                      { value: "liked", label: "Liked Songs" },
+                      ...playlists.map((p) => ({ value: p.id, label: p.name })),
+                    ].map((opt) => (
+                      <button
+                        key={opt.value}
+                        onClick={() => {
+                          set_rec_source(opt.value);
+                          set_rec_tracks([]);
+                          set_rec_open(false);
+                        }}
+                        style={{
+                          display: "block", width: "100%", textAlign: "left",
+                          padding: "7px 12px", borderRadius: 8, fontSize: 12,
+                          color: rec_source === opt.value ? c.white : c.w60,
+                          background: rec_source === opt.value ? c.w10 : "transparent",
+                          overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
+                        }}
+                        onMouseEnter={(e) => {
+                          if (rec_source !== opt.value) e.currentTarget.style.background = c.w06;
+                        }}
+                        onMouseLeave={(e) => {
+                          if (rec_source !== opt.value) e.currentTarget.style.background = "transparent";
+                        }}
+                      >
+                        {opt.label}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+              <button
+                onClick={load_recs}
+                disabled={rec_loading}
+                style={{
+                  display: "flex", alignItems: "center", gap: 6,
+                  padding: "6px 14px", borderRadius: 20, fontSize: 12, fontWeight: 500,
+                  background: c.w06, color: c.w50, border: `1px solid ${c.w08}`,
+                  opacity: rec_loading ? 0.5 : 1,
+                }}
+                onMouseEnter={(e) => { if (!rec_loading) e.currentTarget.style.color = c.white; }}
+                onMouseLeave={(e) => (e.currentTarget.style.color = c.w50)}
+              >
+                <RefreshCw size={12} />
+                {rec_tracks.length > 0 ? "Refresh" : "Go"}
+              </button>
+            </div>
+            {rec_loading && (
+              <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", height: "60%", gap: 10 }}>
+                <div className="dot-bounce"><span /><span /><span /></div>
+                <p style={{ color: c.w25, fontSize: 14 }}>Finding recommendations...</p>
+              </div>
+            )}
+            {!rec_loading && rec_tracks.length === 0 && (
+              <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", height: "60%", gap: 12, color: c.w20 }}>
+                <Music2 size={48} strokeWidth={1} />
+                <p style={{ fontSize: 14 }}>Pick a source and hit Go</p>
+              </div>
+            )}
+            {!rec_loading && rec_tracks.length > 0 && (
+              <TrackResults tracks={rec_tracks} downloads={downloads} on_download={dl_track} />
+            )}
+          </>
         )}
 
         {mode === "youtube" && (

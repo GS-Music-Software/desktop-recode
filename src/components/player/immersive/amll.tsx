@@ -93,6 +93,7 @@ export function Amll({
   tog_shuffle, tog_repeat, on_q_play, on_close,
 }: Props) {
   const ref = useRef<LyricPlayerRef>(null);
+  const bg_ref = useRef<any>(null);
   const raf = useRef(0);
   const prev_ts = useRef(0);
   const device = use_output_device();
@@ -100,6 +101,32 @@ export function Amll({
   const vol_pct = vol * 100;
   const [ctx_menu, set_ctx_menu] = useState<{ x: number; y: number } | null>(null);
   const [tab, set_tab] = useState<Tab>("lyrics");
+
+  useEffect(() => {
+    if (!cover) return;
+    const url = cover;
+    let stale = false;
+    const is_http = url.startsWith("http://") || url.startsWith("https://");
+
+    function load() {
+      const bgRender = bg_ref.current?.bgRender;
+      if (!bgRender) {
+        if (!stale) requestAnimationFrame(load);
+        return;
+      }
+      if (!is_http) {
+        bgRender.setAlbum(url);
+        return;
+      }
+      const img = new Image();
+      img.crossOrigin = "anonymous";
+      img.onload = () => { if (!stale) bgRender.setAlbum(img); };
+      img.src = url;
+    }
+
+    load();
+    return () => { stale = true; };
+  }, [cover]);
 
   useEffect(() => {
     if (ref.current?.lyricPlayer && lines) {
@@ -161,7 +188,7 @@ export function Amll({
       )}
       <div style={{ position: "absolute", inset: 0, zIndex: 0 }}>
         <BackgroundRender
-          album={cover ?? undefined}
+          ref={bg_ref}
           playing={playing}
           hasLyric={!!lines && lines.length > 0}
           fps={30}

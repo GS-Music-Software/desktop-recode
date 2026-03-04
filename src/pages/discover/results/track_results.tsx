@@ -20,8 +20,10 @@ export function TrackResults({ tracks, downloads, on_download }: Props) {
             style={{
               display: "flex",
               alignItems: "center",
-              gap: 12,
-              padding: "7px 24px",
+              gap: 14,
+              padding: "6px 24px",
+              borderRadius: 8,
+              margin: "0 8px",
               transition: "background 0.1s",
             }}
             onMouseEnter={(e) =>
@@ -34,9 +36,9 @@ export function TrackResults({ tracks, downloads, on_download }: Props) {
             <img
               src={t.cover_url}
               style={{
-                width: 44,
-                height: 44,
-                borderRadius: 6,
+                width: 48,
+                height: 48,
+                borderRadius: 8,
                 objectFit: "cover",
                 flexShrink: 0,
                 background: c.card,
@@ -58,8 +60,8 @@ export function TrackResults({ tracks, downloads, on_download }: Props) {
               <p
                 style={{
                   fontSize: 12,
-                  color: c.w45,
-                  marginTop: 2,
+                  color: c.w40,
+                  marginTop: 3,
                   overflow: "hidden",
                   textOverflow: "ellipsis",
                   whiteSpace: "nowrap",

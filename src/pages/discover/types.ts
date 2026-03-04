@@ -1,4 +1,4 @@
-export type SearchMode = "tracks" | "albums" | "artists" | "spotify" | "youtube";
+export type SearchMode = "tracks" | "albums" | "artists" | "recs" | "spotify" | "youtube";
 
 export type DzTrack = {
   id: number;

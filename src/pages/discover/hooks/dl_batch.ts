@@ -34,7 +34,7 @@ type ToastRef = {
 
 type LibRef = {
   music_dir: string | null;
-  load_library: (dir: string) => void;
+  rescan_library: () => Promise<void>;
   load_playlists: () => Promise<void>;
 };
 

@@ -6,7 +6,7 @@ export function make_albums(tracks: TTrack[]): TAlbum[] {
   for (const t of tracks) {
     const key = `${t.artist}::${t.album}`;
     if (!map.has(key)) {
-      map.set(key, { name: t.album, artist: t.artist, cover_path: t.path, year: t.year, tracks: [] });
+      map.set(key, { name: t.album, artist: t.artist, cover_path: t.cover ?? t.path, year: t.year, tracks: [] });
     }
     map.get(key)!.tracks.push(t);
   }
@@ -21,7 +21,7 @@ export function make_artists(tracks: TTrack[]): TArtist[] {
 
   for (const t of tracks) {
     if (!map.has(t.artist)) {
-      map.set(t.artist, { name: t.artist, cover_path: t.path, albums: [], tracks: [] });
+      map.set(t.artist, { name: t.artist, cover_path: t.cover ?? t.path, albums: [], tracks: [] });
     }
     map.get(t.artist)!.tracks.push(t);
   }

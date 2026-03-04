@@ -38,6 +38,8 @@ export function ProfileProv({ children }: { children: ReactNode }) {
     localStorage.removeItem("profile_name");
     localStorage.removeItem("profile_avatar");
     localStorage.removeItem("music_dir");
+    localStorage.removeItem("server_url");
+    localStorage.removeItem("library_mode");
     _set_name("");
     _set_avatar(null);
     set_done(false);

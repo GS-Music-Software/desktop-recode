@@ -2,6 +2,7 @@ import { createContext, useContext, useState, useCallback, useEffect, useRef, ty
 import { invoke } from "@tauri-apps/api/core";
 import { TTrack, TAlbum, TArtist, TView, TPlaylist } from "@/types";
 import { make_albums, make_artists } from "@/lib";
+import { type LibMode, fetch_server_tracks, get_saved_mode, get_saved_url, save_server, clear_server } from "@/lib/server";
 
 type NavEntry = { view: TView; album: TAlbum | null; artist: TArtist | null; playlist: TPlaylist | null };
 
@@ -13,6 +14,8 @@ type LibState = {
   selected_album: TAlbum | null;
   selected_artist: TArtist | null;
   music_dir: string | null;
+  library_mode: LibMode;
+  server_url: string | null;
   loading: boolean;
   err: string | null;
   search: string;
@@ -28,6 +31,9 @@ type LibState = {
   set_artist: (a: TArtist | null) => void;
   set_search: (s: string) => void;
   load_library: (path: string) => Promise<void>;
+  rescan_library: () => Promise<void>;
+  connect_server: (url: string) => Promise<void>;
+  disconnect_server: () => void;
   load_playlists: () => Promise<void>;
   set_playlist: (p: TPlaylist | null) => void;
   reorder_playlists: (ids: string[]) => void;
@@ -45,6 +51,8 @@ export function LibProv({ children }: { children: ReactNode }) {
   const [selected_album, _set_album] = useState<TAlbum | null>(null);
   const [selected_artist, _set_artist] = useState<TArtist | null>(null);
   const [music_dir, set_dir] = useState<string | null>(() => localStorage.getItem("music_dir"));
+  const [library_mode, set_library_mode] = useState<LibMode>(get_saved_mode);
+  const [server_url, set_server_url] = useState<string | null>(get_saved_url);
   const [loading, set_loading] = useState(false);
   const [err, set_err] = useState<string | null>(null);
   const [search, set_search] = useState("");
@@ -173,20 +181,75 @@ export function LibProv({ children }: { children: ReactNode }) {
     }
   }, []);
 
+  const rescan_library = useCallback(async () => {
+    if (get_saved_mode() === "server") {
+      const url = get_saved_url();
+      if (!url) return;
+      try {
+        const mapped = await fetch_server_tracks(url);
+        set_tracks(mapped);
+        set_albums(make_albums(mapped));
+        set_artists(make_artists(mapped));
+      } catch {}
+      return;
+    }
+    const path = localStorage.getItem("music_dir");
+    if (!path) return;
+    try {
+      const res = await invoke<TTrack[]>("scan_dir", { path });
+      set_tracks(res);
+      set_albums(make_albums(res));
+      set_artists(make_artists(res));
+    } catch {}
+  }, []);
+
+  const connect_server = useCallback(async (url: string) => {
+    set_loading(true);
+    set_err(null);
+    try {
+      const mapped = await fetch_server_tracks(url);
+      set_tracks(mapped);
+      set_albums(make_albums(mapped));
+      set_artists(make_artists(mapped));
+      set_server_url(url);
+      set_library_mode("server");
+      set_dir(null);
+      save_server(url);
+    } catch {
+      set_err("server_offline");
+    } finally {
+      set_loading(false);
+    }
+  }, []);
+
+  const disconnect_server = useCallback(() => {
+    set_tracks([]);
+    set_albums([]);
+    set_artists([]);
+    set_server_url(null);
+    set_library_mode("local");
+    clear_server();
+  }, []);
+
   useEffect(() => {
-    const saved = localStorage.getItem("music_dir");
-    if (saved) load_library(saved);
+    if (get_saved_mode() === "server") {
+      const url = get_saved_url();
+      if (url) connect_server(url);
+    } else {
+      const saved = localStorage.getItem("music_dir");
+      if (saved) load_library(saved);
+    }
     load_playlists();
     ld_favs();
-  }, [load_library, load_playlists, ld_favs]);
+  }, [load_library, connect_server, load_playlists, ld_favs]);
 
   return (
     <Ctx.Provider
       value={{
         tracks, albums, artists, view, selected_album, selected_artist,
-        music_dir, loading, err, search, can_back, can_fwd,
+        music_dir, library_mode, server_url, loading, err, search, can_back, can_fwd,
         playlists, selected_playlist, favs, is_fav, toggle_fav,
-        set_view, set_album, set_artist, set_search, load_library, load_playlists, set_playlist, reorder_playlists, nav_back, nav_fwd,
+        set_view, set_album, set_artist, set_search, load_library, rescan_library, connect_server, disconnect_server, load_playlists, set_playlist, reorder_playlists, nav_back, nav_fwd,
       }}
     >
       {children}

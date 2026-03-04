@@ -12,7 +12,7 @@ export function AlbumResults({ albums, on_open }: Props) {
       style={{
         display: "grid",
         gridTemplateColumns: "repeat(auto-fill, minmax(160px, 1fr))",
-        gap: 16,
+        gap: 14,
         padding: "12px 24px",
       }}
     >
@@ -23,17 +23,19 @@ export function AlbumResults({ albums, on_open }: Props) {
           style={{
             textAlign: "left",
             background: c.w04,
-            borderRadius: 10,
+            borderRadius: 12,
             overflow: "hidden",
-            border: `1px solid ${c.w07}`,
-            transition: "background 0.15s",
+            border: `1px solid ${c.w06}`,
+            transition: "background 0.15s, transform 0.15s",
           }}
-          onMouseEnter={(e) =>
-            (e.currentTarget.style.background = c.w08)
-          }
-          onMouseLeave={(e) =>
-            (e.currentTarget.style.background = c.w04)
-          }
+          onMouseEnter={(e) => {
+            e.currentTarget.style.background = c.w07;
+            e.currentTarget.style.transform = "translateY(-2px)";
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.background = c.w04;
+            e.currentTarget.style.transform = "translateY(0)";
+          }}
         >
           <img
             src={a.cover_url}
@@ -45,7 +47,7 @@ export function AlbumResults({ albums, on_open }: Props) {
               background: c.card,
             }}
           />
-          <div style={{ padding: "10px 10px 12px" }}>
+          <div style={{ padding: "10px 12px 12px" }}>
             <p
               style={{
                 fontSize: 13,
@@ -61,8 +63,8 @@ export function AlbumResults({ albums, on_open }: Props) {
             <p
               style={{
                 fontSize: 11,
-                color: c.w45,
-                marginTop: 3,
+                color: c.w40,
+                marginTop: 4,
                 overflow: "hidden",
                 textOverflow: "ellipsis",
                 whiteSpace: "nowrap",

@@ -27,7 +27,9 @@ let _cf_raf: number | null = null;
 let _cf_active = false;
 
 function make_el(): HTMLAudioElement {
-  return new Audio();
+  const el = new Audio();
+  el.crossOrigin = "anonymous";
+  return el;
 }
 
 function get_ctx(): AudioContext {

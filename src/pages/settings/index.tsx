@@ -14,6 +14,7 @@ import {
   Keyboard,
   Download,
   Upload,
+  Server,
 } from "lucide-react";
 import { SpotifySetup } from "@/components/spotify/setup";
 import { SpotifyConnect } from "@/components/spotify/connect";
@@ -72,7 +73,7 @@ function RowIcon({ icon: Icon }: { icon: typeof FolderOpen }) {
 }
 
 export function Settings() {
-  const { music_dir, load_library, set_view } = use_lib();
+  const { music_dir, load_library, set_view, library_mode, server_url, connect_server, disconnect_server } = use_lib();
   const {
     immersive_bg,
     set_immersive_bg,
@@ -99,6 +100,25 @@ export function Settings() {
   const { export_account, import_account, import_state } =
     use_account_export();
   const [sp_setup_open, set_sp_setup_open] = useState(false);
+  const [srv_input, set_srv_input] = useState("");
+  const [srv_connecting, set_srv_connecting] = useState(false);
+  const [srv_err, set_srv_err] = useState<string | null>(null);
+  const [srv_editing, set_srv_editing] = useState(false);
+
+  const try_connect = async () => {
+    const trimmed = srv_input.trim().replace(/\/+$/, "");
+    if (!trimmed) return;
+    set_srv_connecting(true);
+    set_srv_err(null);
+    try {
+      await connect_server(trimmed);
+      set_srv_editing(false);
+    } catch {
+      set_srv_err("Couldn't connect to server");
+    } finally {
+      set_srv_connecting(false);
+    }
+  };
 
   const pick_dir = async () => {
     const dir = await open({ directory: true, title: "Select Music Folder" });
@@ -169,6 +189,50 @@ export function Settings() {
                   </div>
                   <Btn label="Browse" on_click={pick_dir} />
                 </div>
+
+                <div style={sep} />
+
+                <div style={row}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 10, minWidth: 0 }}>
+                    <RowIcon icon={Server} />
+                    <div style={{ minWidth: 0 }}>
+                      <p style={{ fontSize: 13, fontWeight: 500, color: c.text }}>Server</p>
+                      <p style={{ fontSize: 11, color: c.w40, marginTop: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                        {library_mode === "server" ? server_url : "Not connected"}
+                      </p>
+                    </div>
+                  </div>
+                  {library_mode === "server" ? (
+                    <div style={{ display: "flex", gap: 6 }}>
+                      <Btn label="Change" on_click={() => { set_srv_input(server_url ?? ""); set_srv_editing(true); }} />
+                      <Btn label="Disconnect" danger on_click={disconnect_server} />
+                    </div>
+                  ) : (
+                    <Btn label="Connect" on_click={() => set_srv_editing(true)} />
+                  )}
+                </div>
+
+                {srv_editing && (
+                  <div style={{ padding: "0 0 14px" }}>
+                    <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+                      <input
+                        type="text"
+                        value={srv_input}
+                        onChange={e => set_srv_input(e.target.value)}
+                        onKeyDown={e => { if (e.key === "Enter") try_connect(); }}
+                        placeholder="http://192.168.1.100:7700"
+                        style={{
+                          flex: 1, padding: "8px 12px", borderRadius: 8, fontSize: 13,
+                          background: c.w04, border: `1px solid ${srv_err ? "rgba(239,68,68,0.5)" : c.w10}`,
+                          color: c.text, outline: "none",
+                        }}
+                      />
+                      <Btn label={srv_connecting ? "..." : "Go"} on_click={try_connect} />
+                      <Btn label="Cancel" on_click={() => { set_srv_editing(false); set_srv_err(null); }} />
+                    </div>
+                    {srv_err && <p style={{ fontSize: 11, color: "#ef4444", marginTop: 6 }}>{srv_err}</p>}
+                  </div>
+                )}
 
                 <div style={sep} />
 
