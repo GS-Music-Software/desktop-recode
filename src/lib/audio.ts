@@ -1,5 +1,6 @@
 import { invoke } from "@tauri-apps/api/core";
 import { create_spatial, get_spatial_nodes, is_spatial_enabled, set_spatial_enabled } from "./spatial";
+import { FADE_MS, EQ_FREQS, MAX_CROSSFADE, MIN_PITCH, MAX_PITCH, CROSSFADE_STEPS } from "./audio_config";
 
 type AudioCb = {
   on_time?: (t: number) => void;
@@ -8,7 +9,7 @@ type AudioCb = {
   on_pause?: () => void;
 };
 
-export const EQ_FREQS = [32, 64, 125, 250, 500, 1000, 2000, 4000, 8000, 16000];
+export { EQ_FREQS } from "./audio_config";
 
 type Deck = {
   el: HTMLAudioElement;
@@ -120,7 +121,7 @@ function cancel_fade() {
 function do_crossfade(incoming: Deck, outgoing: Deck, duration: number) {
   cancel_fade();
   _cf_active = true;
-  const steps = 30;
+  const steps = CROSSFADE_STEPS;
   const interval = (duration * 1000) / steps;
   let step = 0;
   const vol = get_master_vol();
@@ -154,7 +155,7 @@ export function set_cbs(cbs: AudioCb) {
 }
 
 export function set_crossfade(seconds: number) {
-  _cf_duration = Math.max(0, Math.min(12, seconds));
+  _cf_duration = Math.max(0, Math.min(MAX_CROSSFADE, seconds));
 }
 
 export function get_crossfade(): number {
@@ -183,6 +184,7 @@ export async function play_src(path: string) {
     do_crossfade(incoming, outgoing, _cf_duration);
   } else {
     cancel_fade();
+    cancel_pause_fade();
     const deck = get_active();
     if (path.startsWith("http://") || path.startsWith("https://")) {
       deck.el.src = path;
@@ -190,8 +192,12 @@ export async function play_src(path: string) {
       deck.el.src = await invoke<string>("stream_file", { path });
     }
     deck.el.load();
+    const ctx = get_ctx();
+    const g = deck.gain!.gain;
+    g.cancelScheduledValues(ctx.currentTime);
+    g.setValueAtTime(0, ctx.currentTime);
+    g.linearRampToValueAtTime(_master_vol, ctx.currentTime + FADE_MS / 1000);
     deck.el.play().catch((e) => console.error("play failed", e));
-    deck.gain!.gain.value = _master_vol;
   }
 }
 
@@ -200,14 +206,38 @@ export function is_live(): boolean {
   return el.duration === Infinity || isNaN(el.duration);
 }
 
+let _fade_timer: number | null = null;
+
+function cancel_pause_fade() {
+  if (_fade_timer !== null) { clearTimeout(_fade_timer); _fade_timer = null; }
+}
+
 export function play_resume() {
+  cancel_pause_fade();
   const ctx = get_ctx();
   if (ctx.state === "suspended") ctx.resume();
-  get_active().el.play();
+  const deck = get_active();
+  if (!deck.gain) { deck.el.play(); return; }
+  const g = deck.gain.gain;
+  g.cancelScheduledValues(ctx.currentTime);
+  g.setValueAtTime(0, ctx.currentTime);
+  g.linearRampToValueAtTime(_master_vol, ctx.currentTime + FADE_MS / 1000);
+  deck.el.play();
 }
 
 export function play_pause() {
-  get_active().el.pause();
+  cancel_pause_fade();
+  const ctx = get_ctx();
+  const deck = get_active();
+  if (!deck.gain) { deck.el.pause(); return; }
+  const g = deck.gain.gain;
+  g.cancelScheduledValues(ctx.currentTime);
+  g.setValueAtTime(g.value, ctx.currentTime);
+  g.linearRampToValueAtTime(0, ctx.currentTime + FADE_MS / 1000);
+  _fade_timer = window.setTimeout(() => {
+    deck.el.pause();
+    _fade_timer = null;
+  }, FADE_MS);
 }
 
 export function play_seek(t: number) {
@@ -259,7 +289,7 @@ export function get_pitch(): number {
 }
 
 export function set_pitch(rate: number) {
-  const clamped = Math.max(0.25, Math.min(2, rate));
+  const clamped = Math.max(MIN_PITCH, Math.min(MAX_PITCH, rate));
   if (_a) { _a.el.playbackRate = clamped; _a.el.preservesPitch = false; }
   if (_b) { _b.el.playbackRate = clamped; _b.el.preservesPitch = false; }
 }

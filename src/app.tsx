@@ -2,7 +2,7 @@ import { useEffect, useState, useRef } from "react";
 import { use_lib, use_pl, use_settings, use_profile, use_theme } from "@/ctx";
 import { use_cover, use_rpc, load_keybinds, combo_from_event, get_time } from "@/lib";
 import type { KeybindAction, KeybindBinds } from "@/lib";
-import { WifiOff, RefreshCw, Unplug } from "lucide-react";
+import { WifiOff, RefreshCw, FolderOpen, Server } from "lucide-react";
 import { Sidebar } from "@/components/layout/sidebar";
 import { PlBar } from "@/components/player/pl_bar";
 import { Router } from "@/pages/router";
@@ -47,7 +47,7 @@ function ImmersiveBg({ cover }: { cover: string | null }) {
 const base: React.CSSProperties = { height: "100%", display: "flex", flexDirection: "column", color: c.text, position: "relative" };
 
 export function App() {
-  const { loading, err, nav_back, nav_fwd, library_mode, server_url, connect_server, disconnect_server } = use_lib();
+  const { loading, err, nav_back, nav_fwd, server_url, connect_server, disconnect_server, load_library } = use_lib();
   const { current } = use_pl();
   const { immersive_bg, discord_rpc, rpc_opts } = use_settings();
   const { theme } = use_theme();
@@ -56,6 +56,8 @@ export function App() {
   const app_bg = theme.bg2_enabled ? `linear-gradient(135deg, ${theme.bg1}, ${theme.bg2})` : c.bg;
   const cover = use_cover(immersive_bg ? (current?.path ?? null) : null);
   const [ytdlp_ready, set_ytdlp_ready] = useState(false);
+  const [show_switch, set_show_switch] = useState(false);
+  const [switch_url, set_switch_url] = useState("");
 
   useEffect(() => {
     function on_mouse(e: MouseEvent) {
@@ -122,6 +124,23 @@ export function App() {
   }
 
   if (loading) return <div style={{ ...base, background: app_bg }}><Loading /><OfflineNotice /></div>;
+
+  async function pick_local_folder() {
+    const { open } = await import("@tauri-apps/plugin-dialog");
+    const picked = await open({ directory: true, multiple: false });
+    if (!picked) return;
+    disconnect_server();
+    load_library(picked as string);
+  }
+
+  function switch_to_server() {
+    if (!switch_url.trim()) return;
+    disconnect_server();
+    connect_server(switch_url.trim());
+    set_show_switch(false);
+    set_switch_url("");
+  }
+
   if (err) {
     const is_server = err === "server_offline";
     return (
@@ -148,16 +167,88 @@ export function App() {
                 <RefreshCw size={14} /> Retry
               </button>
               <button
-                onClick={disconnect_server}
+                onClick={() => set_show_switch(true)}
                 style={{
                   display: "flex", alignItems: "center", gap: 6,
                   padding: "8px 18px", borderRadius: 8, fontSize: 13, fontWeight: 600,
                   background: c.card_alt, color: c.w60,
                 }}
               >
-                <Unplug size={14} /> Disconnect
+                Switch Source
               </button>
             </div>
+            {show_switch && (
+              <div style={{
+                position: "fixed", inset: 0, zIndex: 100,
+                display: "flex", alignItems: "center", justifyContent: "center",
+                background: "rgba(0,0,0,0.6)", backdropFilter: "blur(8px)",
+              }} onClick={(e) => { if (e.target === e.currentTarget) set_show_switch(false); }}>
+                <div style={{
+                  background: c.card, border: `1px solid ${c.w10}`, borderRadius: 16,
+                  padding: 24, width: 340, display: "flex", flexDirection: "column", gap: 16,
+                }}>
+                  <p style={{ fontSize: 15, fontWeight: 600, color: c.text, margin: 0 }}>Switch Source</p>
+                  <button
+                    onClick={pick_local_folder}
+                    style={{
+                      display: "flex", alignItems: "center", gap: 10,
+                      padding: "12px 16px", borderRadius: 10, fontSize: 13, fontWeight: 500,
+                      background: c.w06, color: c.text, border: `1px solid ${c.w08}`,
+                      textAlign: "left",
+                    }}
+                    onMouseEnter={(e) => e.currentTarget.style.background = c.w10}
+                    onMouseLeave={(e) => e.currentTarget.style.background = c.w06}
+                  >
+                    <FolderOpen size={18} color={c.w50} />
+                    <div>
+                      <p style={{ margin: 0, fontSize: 13, fontWeight: 600 }}>Use Local Files</p>
+                      <p style={{ margin: 0, fontSize: 11, color: c.w40 }}>Pick a music folder on this device</p>
+                    </div>
+                  </button>
+                  <div style={{
+                    display: "flex", flexDirection: "column", gap: 8,
+                    padding: "12px 16px", borderRadius: 10,
+                    background: c.w06, border: `1px solid ${c.w08}`,
+                  }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                      <Server size={18} color={c.w50} />
+                      <div>
+                        <p style={{ margin: 0, fontSize: 13, fontWeight: 600, color: c.text }}>Connect to Server</p>
+                        <p style={{ margin: 0, fontSize: 11, color: c.w40 }}>Enter a different server URL</p>
+                      </div>
+                    </div>
+                    <div style={{ display: "flex", gap: 8, marginTop: 4 }}>
+                      <input
+                        value={switch_url}
+                        onChange={(e) => set_switch_url(e.target.value)}
+                        onKeyDown={(e) => e.key === "Enter" && switch_to_server()}
+                        placeholder="http://192.168.1.x:7700"
+                        style={{
+                          flex: 1, padding: "7px 10px", borderRadius: 8, fontSize: 12,
+                          background: c.w04, border: `1px solid ${c.w10}`, color: c.text,
+                          outline: "none",
+                        }}
+                      />
+                      <button
+                        onClick={switch_to_server}
+                        style={{
+                          padding: "7px 14px", borderRadius: 8, fontSize: 12, fontWeight: 600,
+                          background: c.accent, color: "#fff",
+                        }}
+                      >
+                        Go
+                      </button>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => set_show_switch(false)}
+                    style={{ fontSize: 12, color: c.w40, padding: "6px 0" }}
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            )}
           </>
         ) : (
           <>

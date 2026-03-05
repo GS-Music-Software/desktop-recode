@@ -1,8 +1,9 @@
 import { useRef } from "react";
 import { use_settings } from "@/ctx";
+import { MAX_CROSSFADE } from "@/lib";
 import { c } from "@/theme";
 
-const MAX = 12;
+const MAX = MAX_CROSSFADE;
 
 export function Crossfade() {
   const { crossfade, set_crossfade } = use_settings();

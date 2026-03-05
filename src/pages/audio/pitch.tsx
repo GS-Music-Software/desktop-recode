@@ -1,9 +1,10 @@
 import { useRef } from "react";
 import { use_settings } from "@/ctx";
+import { MIN_PITCH, MAX_PITCH } from "@/lib";
 import { c } from "@/theme";
 
-const MIN = 0.25;
-const MAX = 2;
+const MIN = MIN_PITCH;
+const MAX = MAX_PITCH;
 const DEFAULT = 1;
 const SNAPS = [0.25, 0.5, 0.75, 1, 1.25, 1.5, 1.75, 2];
 const SNAP_THRESHOLD = 0.02;
