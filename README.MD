@@ -35,6 +35,6 @@ You can download the latest installer from:
 If you prefer to build the application manually:
 
 ```bash
-git clone [https://github.com/GS-Music-Software/desktop-recode.git](https://github.com/GS-Music-Software/desktop-recode.git)
+git clone https://github.com/GS-Music-Software/desktop-recode.git
 cd desktop-recode
 npm install
