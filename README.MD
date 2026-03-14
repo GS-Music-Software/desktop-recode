@@ -2,7 +2,6 @@
   <img src="https://cdn.discordapp.com/attachments/1482469823488458813/1482472129932038254/image.png?ex=69b71342&is=69b5c1c2&hm=5955894ef4f05a913bf852aeb0087c76dcbae96609fcc30582091511d1cb520c&" alt="GS Music Banner" width="400px">
 </p>
 
-<h1 align="center">GS Music</h1>
 
 <p align="center">
 A desktop music player built with Tauri, React, and Rust.
