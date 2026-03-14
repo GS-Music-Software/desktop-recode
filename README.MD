@@ -15,11 +15,6 @@
   <a href="#installation">Installation</a>
 </p>
 
-<p align="center">
-  <img src="https://img.shields.io/github/stars/GS-Music-Software/desktop-recode?style=flat-square&color=66c2cd" alt="Stars">
-  <a href="#installation"><img src="https://img.shields.io/badge/install-blue?style=flat-square&color=2588c7" alt="Install"></a>
-  <img src="https://img.shields.io/github/issues/GS-Music-Software/desktop-recode?style=flat-square&color=d6b23a" alt="Issues">
-</p>
 ***
 
 ## Features
