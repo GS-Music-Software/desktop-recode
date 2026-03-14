@@ -17,12 +17,9 @@
 
 <p align="center">
   <img src="https://img.shields.io/github/stars/GS-Music-Software/desktop-recode?style=flat-square&color=66c2cd" alt="Stars">
-  <img src="https://img.shields.io/github/v/release/GS-Music-Software/desktop-recode?style=flat-square&color=2588c7" alt="Release">
-  <img src="https://img.shields.io/github/actions/workflow/status/GS-Music-Software/desktop-recode/build.yml?style=flat-square" alt="Build">
-  <img src="https://img.shields.io/github/license/GS-Music-Software/desktop-recode?style=flat-square&color=df7e4d" alt="License">
+  <a href="#installation"><img src="https://img.shields.io/badge/install-blue?style=flat-square&color=2588c7" alt="Install"></a>
   <img src="https://img.shields.io/github/issues/GS-Music-Software/desktop-recode?style=flat-square&color=d6b23a" alt="Issues">
 </p>
-
 ***
 
 ## Features
