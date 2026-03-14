@@ -43,7 +43,7 @@ Building from source requires:
 ## Installation
 
 ### Binary
-Download the installer from [music.strikes.cloud](https://music.strikes.cloud).
+Download the installer from [music.strikes.cloud](https://music.strikes.cloud) or from the [GitHub Releases](https://github.com/GS-Music-Software/recode-installer/releases/tag/Release).
 
 ### Build from source
 ```bash
