@@ -27,7 +27,12 @@ Install these with your package manager:
 
 ***
 
-## Setup
+### Download
+You can download the latest installer from:
+[music.strikes.cloud](https://music.strikes.cloud)
+
+### Build from Source
+If you prefer to build the application manually:
 
 ```bash
 git clone [https://github.com/GS-Music-Software/desktop-recode.git](https://github.com/GS-Music-Software/desktop-recode.git)
