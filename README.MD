@@ -10,6 +10,10 @@
 </p>
 
 <p align="center">
+  <img src="https://media.discordapp.net/attachments/956970321083244624/1482849181629415455/image.png?ex=69b8726a&is=69b720ea&hm=acb68ac797ca09817f725e382f73b851a4ad9eb6461fa12ebe8684fa8b5a5598&=&format=webp&quality=lossless&width=1501&height=958" alt="GS Music Showcase" width="100%">
+</p>
+
+<p align="center">
   <a href="https://music.strikes.cloud">Website</a> |
   <a href="https://github.com/GS-Music-Software/desktop-recode/issues">Issues</a> |
   <a href="#installation">Installation</a>
@@ -47,6 +51,6 @@ Download the installer from [music.strikes.cloud](https://music.strikes.cloud) o
 
 ### Build from source
 ```bash
-git clone https://github.com/GS-Music-Software/desktop-recode.git
+git clone [https://github.com/GS-Music-Software/desktop-recode.git](https://github.com/GS-Music-Software/desktop-recode.git)
 cd desktop-recode
 npm install
