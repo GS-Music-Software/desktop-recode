@@ -51,6 +51,6 @@ Download the installer from [music.strikes.cloud](https://music.strikes.cloud) o
 
 ### Build from source
 ```bash
-git clone [https://github.com/GS-Music-Software/desktop-recode.git](https://github.com/GS-Music-Software/desktop-recode.git)
+git clone https://github.com/GS-Music-Software/desktop-recode.git
 cd desktop-recode
 npm install
