@@ -1,3 +1,23 @@
+Recode v1.5
+```
+### Changelog
+- Added SoundCloud downloading support.
+- Switched to Musixmatch for lyrics fetching.
+- Added UI animations throughout the app.
+- Improved dropdowns styling.
+- Recoded the immersive lyric view the background should no longer randomly disappear.
+- Redesigned settings with a tab system.
+- Added option in settings to choose where to fetch lyrics from.
+- Added a refresh library button to pick up newly added songs without restarting.
+- Improved a lot of code internally.
+- Song name now appears in the titlebar while playing.
+- Added server heartbeat check for users of the GS Music server software.
+- Removed the old lyrics screen, replaced by the new immersive lyric view.
+- Added Go To Artist and Go To Album buttons.
+```
+Reinstall GS Music with the installer from https://music.strikes.cloud/
+This will put you on the latest version.
+
 Recode v1.4
 ```
 ### Changelog
