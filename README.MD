@@ -1,6 +1,6 @@
 <p align="center">
   <br>
-  <img src="https://cdn.discordapp.com/attachments/1482469823488458813/1482470291002101991/icon_final_.png?ex=69b7118c&is=69b5c00c&hm=20e63bc9e3f5a2ba87df904a456f964941e3c05fbc6d1bd822571eb8344e3a44&" alt="GS Music Logo" width="160px">
+  <img src="https://raw.githubusercontent.com/GS-Music-Software/assets/refs/heads/main/icon_final_.png" alt="GS Music Logo" width="160px">
 </p>
 
 <h1 align="center">GS Music</h1>
