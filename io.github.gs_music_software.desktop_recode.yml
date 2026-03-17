@@ -1,6 +1,6 @@
 app-id: io.github.gs_music_software.desktop_recode
 runtime: org.gnome.Platform
-runtime-version: '47'
+runtime-version: '48'
 sdk: org.gnome.Sdk
 sdk-extensions:
   - org.freedesktop.Sdk.Extension.rust-stable
@@ -30,7 +30,7 @@ modules:
         XDG_CACHE_HOME: /run/build/gs-music/cache
         CARGO_NET_OFFLINE: 'true'
     build-commands:
-      - npm ci --offline
+      - npm ci --prefer-offline
       - npm run build
       - cargo build --release --manifest-path src-tauri/Cargo.toml
       - install -Dm755 src-tauri/target/release/gs-music /app/bin/gs-music
@@ -43,7 +43,6 @@ modules:
     sources:
       - type: git
         url: https://github.com/GS-Music-Software/desktop-recode.git
-        tag: v1.5.0
-        commit: REPLACE_WITH_COMMIT_HASH
+        commit: 911d72da7f6fc3661cf9a44e7816b4d3af67874e
       - cargo-sources.json
       - node-sources.json
