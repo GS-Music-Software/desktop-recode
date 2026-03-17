@@ -10,7 +10,7 @@
 </p>
 
 <p align="center">
-  <img src="https://media.discordapp.net/attachments/956970321083244624/1482849181629415455/image.png?ex=69b8726a&is=69b720ea&hm=acb68ac797ca09817f725e382f73b851a4ad9eb6461fa12ebe8684fa8b5a5598&=&format=webp&quality=lossless&width=1501&height=958" alt="GS Music Showcase" width="100%">
+  <img src="https://raw.githubusercontent.com/GS-Music-Software/assets/refs/heads/main/Screenshot_20260316_220120.png" alt="GS Music Showcase" width="100%">
 </p>
 
 <p align="center">
