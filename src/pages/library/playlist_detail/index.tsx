@@ -8,12 +8,13 @@ import { Play, Shuffle, ListMusic, Search } from "lucide-react";
 import { PlCover } from "./cover";
 import { HeroBtn } from "./hero_btn";
 import { PlTrackRow, ROW_H } from "./track_row";
+import { PlaylistTitleEditor } from "./playlist_title_editor";
 import { SortDropdown, type SortMode } from "./sort_dropdown";
 import { c } from "@/theme";
 
 export function PlaylistDetail() {
   const { selected_playlist, tracks, load_playlists, favs, is_fav, toggle_fav, albums, artists, set_album, set_artist, set_view } = use_lib();
-  const { play, current } = use_pl();
+  const { play, current, set_shuffle } = use_pl();
   const [pl, set_pl] = useState<TPlaylist | null>(selected_playlist);
   const [hov_idx, set_hov_idx] = useState<number | null>(null);
   const [sort, set_sort] = useState<SortMode>("recent");
@@ -135,9 +136,10 @@ export function PlaylistDetail() {
 
   const shuffle_all = useCallback(() => {
     if (!resolved.length) return;
+    set_shuffle(true);
     const shuffled = [...resolved].sort(() => Math.random() - 0.5);
     play(shuffled[0], shuffled);
-  }, [resolved, play]);
+  }, [resolved, play, set_shuffle]);
 
   const handle_artist = useCallback((name: string) => {
     const ar = artists.find(a => a.name === name);
@@ -148,6 +150,15 @@ export function PlaylistDetail() {
     const al = albums.find(a => a.name === name && a.artist === artist);
     if (al) { set_album(al); set_view("album_detail"); }
   }, [albums, set_album, set_view]);
+
+  const on_rename = async (name: string) => {
+    if (!pl) return;
+    try {
+      await invoke("pl_rename", { id: pl.id, name });
+      set_pl(prev => prev ? { ...prev, name } : null);
+      await load_playlists();
+    } catch (e) { console.error("pl_rename:", e); }
+  };
 
   if (!pl) {
     return (
@@ -174,10 +185,7 @@ export function PlaylistDetail() {
             on_cover_change={(cover) => set_pl(prev => prev ? { ...prev, cover } : null)}
           />
           <div style={{ display: "flex", flexDirection: "column", gap: 8, minWidth: 0 }}>
-            <h1 style={{
-              fontSize: 32, fontWeight: 800, color: c.text, letterSpacing: "-0.5px",
-              overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
-            }}>{pl.name}</h1>
+            <PlaylistTitleEditor name={pl.name} on_change={on_rename} />
             {pl.description && (
               <p style={{ fontSize: 13, color: c.w45, lineHeight: 1.4 }}>{pl.description}</p>
             )}

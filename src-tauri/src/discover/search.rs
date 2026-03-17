@@ -1,6 +1,10 @@
 use super::util::{enc, dz_get};
 use super::types::*;
 
+fn best_cover(xl: &str, medium: &str) -> String {
+    if xl.is_empty() { medium.to_string() } else { xl.to_string() }
+}
+
 #[tauri::command]
 pub async fn search_tracks(q: String) -> Result<Vec<DzTrack>, String> {
     let url = format!("https://api.deezer.com/search/track?q={}&limit=25", enc(&q));
@@ -10,7 +14,7 @@ pub async fn search_tracks(q: String) -> Result<Vec<DzTrack>, String> {
         title: t.title,
         artist: t.artist.name,
         album: t.album.title,
-        cover_url: t.album.cover_medium,
+        cover_url: best_cover(&t.album.cover_xl, &t.album.cover_medium),
         duration: t.duration,
     }).collect())
 }
@@ -23,7 +27,7 @@ pub async fn search_albums(q: String) -> Result<Vec<DzAlbumResult>, String> {
         id: a.id,
         title: a.title,
         artist: a.artist.map_or(String::new(), |ar| ar.name),
-        cover_url: a.cover_medium,
+        cover_url: best_cover(&a.cover_xl, &a.cover_medium),
         nb_tracks: a.nb_tracks,
     }).collect())
 }
@@ -62,7 +66,7 @@ pub async fn get_artist_albums(artist_id: u64) -> Result<Vec<DzAlbumResult>, Str
         id: a.id,
         title: a.title,
         artist: a.artist.map_or(String::new(), |ar| ar.name),
-        cover_url: a.cover_medium,
+        cover_url: best_cover(&a.cover_xl, &a.cover_medium),
         nb_tracks: a.nb_tracks,
     }).collect())
 }

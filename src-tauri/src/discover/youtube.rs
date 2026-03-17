@@ -15,6 +15,8 @@ pub struct YtTrack {
     pub album: String,
     pub duration: f64,
     pub cover_url: String,
+    pub url: Option<String>,
+    pub metadata_found: bool,
 }
 
 #[derive(Serialize, Clone)]
@@ -118,21 +120,24 @@ async fn dz_lookup(artist: &str, title: &str) -> Option<(String, String)> {
     let url1 = format!("https://api.deezer.com/search/track?q={}&limit=3", enc(&q1));
     if let Ok(res) = dz_get::<TrackSearchRes>(&url1).await {
         if let Some(t) = res.data.into_iter().next() {
-            return Some((t.album.cover_medium, t.album.title));
+            let cover = if t.album.cover_xl.is_empty() { t.album.cover_medium } else { t.album.cover_xl };
+            return Some((cover, t.album.title));
         }
     }
     let q2 = format!("{} {}", parsed_artist, song);
     let url2 = format!("https://api.deezer.com/search/track?q={}&limit=3", enc(&q2));
     if let Ok(res) = dz_get::<TrackSearchRes>(&url2).await {
         if let Some(t) = res.data.into_iter().next() {
-            return Some((t.album.cover_medium, t.album.title));
+            let cover = if t.album.cover_xl.is_empty() { t.album.cover_medium } else { t.album.cover_xl };
+            return Some((cover, t.album.title));
         }
     }
     let q3 = song.to_string();
     let url3 = format!("https://api.deezer.com/search/track?q={}&limit=3", enc(&q3));
     if let Ok(res) = dz_get::<TrackSearchRes>(&url3).await {
         if let Some(t) = res.data.into_iter().next() {
-            return Some((t.album.cover_medium, t.album.title));
+            let cover = if t.album.cover_xl.is_empty() { t.album.cover_medium } else { t.album.cover_xl };
+            return Some((cover, t.album.title));
         }
     }
     None
@@ -220,19 +225,89 @@ pub async fn yt_playlist_tracks(app: AppHandle, url: String) -> Result<YtPlaylis
         });
 
         let yt_thumb = best_thumb(&json);
-        let (cover_url, album) = match dz_lookup(&artist, &raw_title).await {
-            Some((c, a)) => (c, a),
-            None => (yt_thumb, String::new()),
-        };
+        let dz = dz_lookup(&artist, &raw_title).await;
+        let metadata_found = dz.is_some();
+        let (cover_url, album) = dz.unwrap_or_else(|| (yt_thumb, String::new()));
         tracks.push(YtTrack {
             title: display_title,
             artist,
             album,
             duration: json.duration.unwrap_or(0.0),
             cover_url,
+            url: None,
+            metadata_found,
         });
     }
 
     let name = if pl_name.is_empty() { fallback_name } else { pl_name };
     Ok(YtPlaylistResult { name, tracks })
+}
+
+#[tauri::command]
+pub async fn yt_link_tracks(app: AppHandle, urls: Vec<String>) -> Result<YtPlaylistResult, String> {
+    let total = urls.len();
+    let _ = app.emit("yt_import_progress", YtImportProgress {
+        phase: "fetching".into(), done: 0, total, title: String::new(),
+    });
+
+    let mut tracks = Vec::new();
+    let bin = ytdlp_bin();
+
+    for (i, url) in urls.iter().enumerate() {
+        let trimmed = url.trim();
+        if trimmed.is_empty() { continue; }
+
+        let mut cmd = tokio::process::Command::new(&bin);
+        cmd.args(["--dump-json", "--no-warnings", "--no-playlist"])
+            .arg(trimmed);
+        #[cfg(target_os = "windows")]
+        cmd.creation_flags(CREATE_NO_WINDOW);
+        let out = cmd.output().await;
+
+        let out = match out {
+            Ok(o) if o.status.success() => o,
+            _ => {
+                let _ = app.emit("yt_import_progress", YtImportProgress {
+                    phase: "covers".into(), done: i + 1, total, title: format!("Failed: {}", trimmed),
+                });
+                continue;
+            }
+        };
+
+        let stdout = String::from_utf8_lossy(&out.stdout);
+        let json: YtJson = match serde_json::from_str(stdout.trim()) {
+            Ok(j) => j,
+            Err(_) => continue,
+        };
+
+        let raw_title = json.title.clone().unwrap_or_default();
+        if raw_title.is_empty() { continue; }
+        let yt_artist = json.uploader.as_deref()
+            .or(json.channel.as_deref())
+            .map(clean_artist)
+            .unwrap_or_default();
+        let (song, parsed_artist) = parse_yt_title(&raw_title, &yt_artist);
+        let display_title = if song.is_empty() { strip_brackets(&raw_title) } else { song.clone() };
+        let artist = if parsed_artist.is_empty() { yt_artist } else { parsed_artist };
+
+        let _ = app.emit("yt_import_progress", YtImportProgress {
+            phase: "covers".into(), done: i + 1, total, title: display_title.clone(),
+        });
+
+        let yt_thumb = best_thumb(&json);
+        let dz = dz_lookup(&artist, &raw_title).await;
+        let metadata_found = dz.is_some();
+        let (cover_url, album) = dz.unwrap_or_else(|| (yt_thumb, String::new()));
+        tracks.push(YtTrack {
+            title: display_title,
+            artist,
+            album,
+            duration: json.duration.unwrap_or(0.0),
+            cover_url,
+            url: Some(trimmed.to_string()),
+            metadata_found,
+        });
+    }
+
+    Ok(YtPlaylistResult { name: String::new(), tracks })
 }

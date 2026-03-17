@@ -1,5 +1,6 @@
 import { useState, useRef, useCallback, useEffect } from "react";
 import { ZoomIn, ZoomOut } from "lucide-react";
+import { Modal } from "@/components/modal";
 import { c } from "@/theme";
 
 type Props = {
@@ -86,128 +87,119 @@ export function AvatarCrop({ src, on_apply, on_cancel }: Props) {
     set_zoom(z => Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, z + dir * 0.2)));
   };
 
-  const render_crop = () => {
-    const canvas = document.createElement("canvas");
-    canvas.width = OUTPUT;
-    canvas.height = OUTPUT;
-    const ctx = canvas.getContext("2d");
-    if (!ctx || !img_ref.current) return;
-
-    const scaled = get_scaled();
-    const draw_x = (SIZE / 2 + offset.x - scaled.w / 2) * (OUTPUT / SIZE);
-    const draw_y = (SIZE / 2 + offset.y - scaled.h / 2) * (OUTPUT / SIZE);
-    const draw_w = scaled.w * (OUTPUT / SIZE);
-    const draw_h = scaled.h * (OUTPUT / SIZE);
-
-    ctx.beginPath();
-    ctx.arc(OUTPUT / 2, OUTPUT / 2, OUTPUT / 2, 0, Math.PI * 2);
-    ctx.clip();
-    ctx.drawImage(img_ref.current, draw_x, draw_y, draw_w, draw_h);
-
-    on_apply(canvas.toDataURL("image/png"));
-  };
-
   const scaled = get_scaled();
 
   return (
-    <div onClick={on_cancel} style={{
-      position: "fixed", inset: 0, zIndex: 10001,
-      display: "flex", alignItems: "center", justifyContent: "center",
-      backdropFilter: "blur(24px)",
-      WebkitBackdropFilter: "blur(24px)",
-      background: c.b35,
-    }}>
-      <div onClick={e => e.stopPropagation()} style={{
-        width: 420, padding: "32px 36px",
-        borderRadius: 18,
-        background: c.modal,
-        border: `1px solid ${c.w08}`,
-        boxShadow: `0 24px 80px ${c.b70}`,
-        display: "flex", flexDirection: "column", alignItems: "center",
-      }}>
-        <h2 style={{ fontSize: 17, fontWeight: 700, color: c.text, marginBottom: 20, alignSelf: "flex-start" }}>
-          Adjust Photo
-        </h2>
+    <Modal on_close={on_cancel} z={10001} panel_style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
+      {(close) => {
+        const render_crop = () => {
+          const canvas = document.createElement("canvas");
+          canvas.width = OUTPUT;
+          canvas.height = OUTPUT;
+          const ctx = canvas.getContext("2d");
+          if (!ctx || !img_ref.current) return;
 
-        <div
-          onMouseDown={on_mouse_down}
-          onWheel={on_wheel}
-          style={{
-            width: SIZE, height: SIZE,
-            borderRadius: "50%",
-            overflow: "hidden",
-            border: `2px solid ${c.w15}`,
-            cursor: dragging.current ? "grabbing" : "grab",
-            position: "relative",
-            flexShrink: 0,
-          }}
-        >
-          <img
-            src={src}
-            draggable={false}
-            style={{
-              position: "absolute",
-              width: scaled.w,
-              height: scaled.h,
-              left: SIZE / 2 + offset.x - scaled.w / 2,
-              top: SIZE / 2 + offset.y - scaled.h / 2,
-              pointerEvents: "none",
-              userSelect: "none",
-            }}
-          />
-        </div>
+          const s = get_scaled();
+          const draw_x = (SIZE / 2 + offset.x - s.w / 2) * (OUTPUT / SIZE);
+          const draw_y = (SIZE / 2 + offset.y - s.h / 2) * (OUTPUT / SIZE);
+          const draw_w = s.w * (OUTPUT / SIZE);
+          const draw_h = s.h * (OUTPUT / SIZE);
 
-        <div style={{
-          display: "flex", alignItems: "center", gap: 12,
-          marginTop: 20, width: "100%", maxWidth: SIZE,
-        }}>
-          <button
-            onClick={() => nudge_zoom(-1)}
-            style={{ display: "flex", padding: 4, borderRadius: 4, transition: "background 0.15s" }}
-            onMouseEnter={e => (e.currentTarget.style.background = c.w10)}
-            onMouseLeave={e => (e.currentTarget.style.background = "transparent")}
-          >
-            <ZoomOut size={16} color={c.w40} />
-          </button>
-          <input
-            type="range"
-            min={MIN_ZOOM}
-            max={MAX_ZOOM}
-            step={0.01}
-            value={zoom}
-            onChange={e => set_zoom(parseFloat(e.target.value))}
-            className="avatar-crop-slider"
-            style={{ flex: 1, height: 4 }}
-          />
-          <button
-            onClick={() => nudge_zoom(1)}
-            style={{ display: "flex", padding: 4, borderRadius: 4, transition: "background 0.15s" }}
-            onMouseEnter={e => (e.currentTarget.style.background = c.w10)}
-            onMouseLeave={e => (e.currentTarget.style.background = "transparent")}
-          >
-            <ZoomIn size={16} color={c.w40} />
-          </button>
-        </div>
+          ctx.beginPath();
+          ctx.arc(OUTPUT / 2, OUTPUT / 2, OUTPUT / 2, 0, Math.PI * 2);
+          ctx.clip();
+          ctx.drawImage(img_ref.current, draw_x, draw_y, draw_w, draw_h);
 
-        <div style={{ display: "flex", gap: 8, justifyContent: "flex-end", width: "100%", marginTop: 24 }}>
-          <button onClick={on_cancel} style={{
-            padding: "8px 20px", borderRadius: 8, fontSize: 13, fontWeight: 500,
-            background: c.w06, color: c.w50,
-            transition: "background 0.15s",
-          }}
-            onMouseEnter={e => (e.currentTarget.style.background = c.w10)}
-            onMouseLeave={e => (e.currentTarget.style.background = c.w06)}
-          >Cancel</button>
-          <button onClick={render_crop} style={{
-            padding: "8px 20px", borderRadius: 8, fontSize: 13, fontWeight: 500,
-            background: c.accent, color: c.white,
-            transition: "opacity 0.15s",
-          }}
-            onMouseEnter={e => (e.currentTarget.style.opacity = "0.85")}
-            onMouseLeave={e => (e.currentTarget.style.opacity = "1")}
-          >Apply</button>
-        </div>
-      </div>
-    </div>
+          on_apply(canvas.toDataURL("image/png"));
+        };
+
+        return (
+          <>
+            <h2 style={{ fontSize: 17, fontWeight: 700, color: c.text, marginBottom: 20, alignSelf: "flex-start" }}>
+              Adjust Photo
+            </h2>
+
+            <div
+              onMouseDown={on_mouse_down}
+              onWheel={on_wheel}
+              style={{
+                width: SIZE, height: SIZE,
+                borderRadius: "50%",
+                overflow: "hidden",
+                border: `2px solid ${c.w15}`,
+                cursor: dragging.current ? "grabbing" : "grab",
+                position: "relative",
+                flexShrink: 0,
+              }}
+            >
+              <img
+                src={src}
+                draggable={false}
+                style={{
+                  position: "absolute",
+                  width: scaled.w,
+                  height: scaled.h,
+                  left: SIZE / 2 + offset.x - scaled.w / 2,
+                  top: SIZE / 2 + offset.y - scaled.h / 2,
+                  pointerEvents: "none",
+                  userSelect: "none",
+                }}
+              />
+            </div>
+
+            <div style={{
+              display: "flex", alignItems: "center", gap: 12,
+              marginTop: 20, width: "100%", maxWidth: SIZE,
+            }}>
+              <button
+                onClick={() => nudge_zoom(-1)}
+                style={{ display: "flex", padding: 4, borderRadius: 4, transition: "background 0.15s" }}
+                onMouseEnter={e => (e.currentTarget.style.background = c.w10)}
+                onMouseLeave={e => (e.currentTarget.style.background = "transparent")}
+              >
+                <ZoomOut size={16} color={c.w40} />
+              </button>
+              <input
+                type="range"
+                min={MIN_ZOOM}
+                max={MAX_ZOOM}
+                step={0.01}
+                value={zoom}
+                onChange={e => set_zoom(parseFloat(e.target.value))}
+                className="avatar-crop-slider"
+                style={{ flex: 1, height: 4 }}
+              />
+              <button
+                onClick={() => nudge_zoom(1)}
+                style={{ display: "flex", padding: 4, borderRadius: 4, transition: "background 0.15s" }}
+                onMouseEnter={e => (e.currentTarget.style.background = c.w10)}
+                onMouseLeave={e => (e.currentTarget.style.background = "transparent")}
+              >
+                <ZoomIn size={16} color={c.w40} />
+              </button>
+            </div>
+
+            <div style={{ display: "flex", gap: 8, justifyContent: "flex-end", width: "100%", marginTop: 24 }}>
+              <button onClick={close} style={{
+                padding: "8px 20px", borderRadius: 8, fontSize: 13, fontWeight: 500,
+                background: c.w06, color: c.w50,
+                transition: "background 0.15s",
+              }}
+                onMouseEnter={e => (e.currentTarget.style.background = c.w10)}
+                onMouseLeave={e => (e.currentTarget.style.background = c.w06)}
+              >Cancel</button>
+              <button onClick={render_crop} style={{
+                padding: "8px 20px", borderRadius: 8, fontSize: 13, fontWeight: 500,
+                background: c.accent, color: c.white,
+                transition: "opacity 0.15s",
+              }}
+                onMouseEnter={e => (e.currentTarget.style.opacity = "0.85")}
+                onMouseLeave={e => (e.currentTarget.style.opacity = "1")}
+              >Apply</button>
+            </div>
+          </>
+        );
+      }}
+    </Modal>
   );
 }

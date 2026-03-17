@@ -2,13 +2,14 @@ import { c } from "@/theme";
 
 type Props = {
   progress: { phase: string; done: number; total: number; title: string } | null;
+  fetch_label?: string;
 };
 
-export function YtProgress({ progress }: Props) {
+export function YtProgress({ progress, fetch_label = "Fetching playlist..." }: Props) {
   return (
     <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 10, padding: 32 }}>
       {progress?.phase === "fetching" && (
-        <p style={{ fontSize: 13, color: c.w50 }}>Fetching playlist...</p>
+        <p style={{ fontSize: 13, color: c.w50 }}>{fetch_label}</p>
       )}
       {progress?.phase === "covers" && progress.total > 0 && (
         <>

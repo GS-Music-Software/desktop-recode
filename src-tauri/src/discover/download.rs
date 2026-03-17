@@ -25,12 +25,31 @@ fn ffmpeg_bin() -> String {
 }
 
 #[tauri::command]
-pub async fn download_track(app: AppHandle, id: u64, artist: String, title: String, album: String, cover_url: String, duration: u64, save_dir: Option<String>) -> Result<(), String> {
-    let query = format!("ytsearch5:{} - {} audio", artist, title);
+pub async fn download_track(app: AppHandle, id: u64, artist: String, title: String, album: String, cover_url: String, duration: u64, save_dir: Option<String>, use_soundcloud: Option<bool>, url: Option<String>) -> Result<(), String> {
     let base = save_dir
         .map(std::path::PathBuf::from)
         .unwrap_or_else(|| dirs::audio_dir()
             .unwrap_or_else(|| dirs::home_dir().unwrap_or_default().join("Music")));
+
+    if url.is_none() && use_soundcloud.unwrap_or(false) {
+        println!("[soundcloud] trying soundcloud for \"{}\" - \"{}\"", artist, title);
+        match super::cobalt::dl_via_soundcloud(&app, id, &artist, &title, &album, &cover_url, &base).await {
+            Ok(final_path) => {
+                println!("[soundcloud] done: {}", final_path.display());
+                let _ = app.emit("dl_progress", DlProgress { id, pct: 100.0 });
+                let _ = app.emit("dl_done", DlDone { id, path: Some(final_path.to_string_lossy().to_string()), err: None });
+                return Ok(());
+            }
+            Err(e) => {
+                println!("[soundcloud] failed: {e}, falling back to yt-dlp...");
+            }
+        }
+    }
+
+    let query = match url {
+        Some(ref u) => { println!("[yt-dlp] downloading direct url: {}", u); u.clone() }
+        None => format!("ytsearch5:{} - {} audio", artist, title),
+    };
     let out_dir = base.join(format!("{} - {}", artist, album));
     std::fs::create_dir_all(&out_dir).map_err(|e| e.to_string())?;
     let tpl = out_dir.join("%(title)s.%(ext)s").to_string_lossy().to_string();
@@ -50,7 +69,7 @@ pub async fn download_track(app: AppHandle, id: u64, artist: String, title: Stri
             "--print", "after_move:filepath",
             "-o", &tpl,
         ]);
-    if duration > 0 {
+    if duration > 0 && url.is_none() {
         let min = (duration as f64 * 0.7) as u64;
         let max = duration + 30;
         cmd.args(["--match-filter", &format!("duration>={} & duration<={}", min, max)]);
@@ -120,8 +139,26 @@ pub async fn download_track(app: AppHandle, id: u64, artist: String, title: Stri
     Ok(())
 }
 
-async fn fetch_cover_tmp(url: &str) -> Option<PathBuf> {
+pub async fn fetch_cover_tmp(url: &str) -> Option<PathBuf> {
     if url.is_empty() { return None; }
+
+    let local = if url.starts_with("file://") {
+        Some(url.strip_prefix("file://").unwrap_or(url))
+    } else if std::path::Path::new(url).is_absolute() {
+        Some(url)
+    } else {
+        None
+    };
+    if let Some(local_path) = local {
+        let src = std::path::Path::new(local_path);
+        if src.exists() {
+            let n = COVER_CTR.fetch_add(1, Ordering::Relaxed);
+            let path = std::env::temp_dir().join(format!("gs_cover_{}_{n}.jpg", std::process::id()));
+            std::fs::copy(src, &path).ok()?;
+            return Some(path);
+        }
+        return None;
+    }
     let data = reqwest::get(url).await.ok()?.bytes().await.ok()?;
     let n = COVER_CTR.fetch_add(1, Ordering::Relaxed);
     let path = std::env::temp_dir().join(format!("gs_cover_{}_{n}.jpg", std::process::id()));
@@ -129,7 +166,7 @@ async fn fetch_cover_tmp(url: &str) -> Option<PathBuf> {
     Some(path)
 }
 
-async fn embed_meta(mp3: &Path, artist: &str, title: &str, album: &str, cover: Option<&Path>) -> Result<(), String> {
+pub async fn embed_meta(mp3: &Path, artist: &str, title: &str, album: &str, cover: Option<&Path>) -> Result<(), String> {
     let tmp = mp3.with_extension("tmp.mp3");
 
     let mut args: Vec<String> = vec![

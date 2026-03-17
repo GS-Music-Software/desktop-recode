@@ -3,7 +3,8 @@ import { use_lib } from "@/ctx";
 import { invoke } from "@tauri-apps/api/core";
 import { TPlaylist } from "@/types";
 import { PlCreateModal } from "@/components/pl_create_modal";
-import { Plus, ListMusic, Heart, Trash2, type LucideIcon } from "lucide-react";
+import { PlRenameModal } from "@/components/pl_rename_modal";
+import { Plus, ListMusic, Heart, Trash2, Pencil, type LucideIcon } from "lucide-react";
 import { c } from "@/theme";
 
 function PlNavBtn({ label, icon: Icon, active, on_click }: { label: string; icon: LucideIcon; active: boolean; on_click: () => void }) {
@@ -35,8 +36,9 @@ function PlNavBtn({ label, icon: Icon, active, on_click }: { label: string; icon
   );
 }
 
-function CtxMenu({ x, y, on_delete, on_close }: { x: number; y: number; on_delete: () => void; on_close: () => void }) {
-  const [hov, set_hov] = useState(false);
+function CtxMenu({ x, y, on_rename, on_delete, on_close }: { x: number; y: number; on_rename: () => void; on_delete: () => void; on_close: () => void }) {
+  const [hov_rename, set_hov_rename] = useState(false);
+  const [hov_delete, set_hov_delete] = useState(false);
 
   useEffect(() => {
     const close = () => on_close();
@@ -58,14 +60,30 @@ function CtxMenu({ x, y, on_delete, on_close }: { x: number; y: number; on_delet
       backdropFilter: "blur(20px)",
     }}>
       <button
-        onClick={(e) => { e.stopPropagation(); on_delete(); }}
-        onMouseEnter={() => set_hov(true)}
-        onMouseLeave={() => set_hov(false)}
+        onClick={(e) => { e.stopPropagation(); on_rename(); }}
+        onMouseEnter={() => set_hov_rename(true)}
+        onMouseLeave={() => set_hov_rename(false)}
         style={{
           display: "flex", alignItems: "center", gap: 8,
           width: "100%", padding: "7px 10px", borderRadius: 6,
           fontSize: 13, fontWeight: 500, textAlign: "left",
-          background: hov ? c.accent_15 : "transparent",
+          background: hov_rename ? c.w08 : "transparent",
+          color: c.text,
+          transition: "background 0.1s",
+        }}
+      >
+        <Pencil size={14} />
+        Rename
+      </button>
+      <button
+        onClick={(e) => { e.stopPropagation(); on_delete(); }}
+        onMouseEnter={() => set_hov_delete(true)}
+        onMouseLeave={() => set_hov_delete(false)}
+        style={{
+          display: "flex", alignItems: "center", gap: 8,
+          width: "100%", padding: "7px 10px", borderRadius: 6,
+          fontSize: 13, fontWeight: 500, textAlign: "left",
+          background: hov_delete ? c.accent_15 : "transparent",
           color: c.accent,
           transition: "background 0.1s",
         }}
@@ -116,6 +134,7 @@ export function SbPlaylists() {
   const { playlists, selected_playlist, view, set_view, set_album, set_artist, set_playlist, load_playlists, reorder_playlists } = use_lib();
   const [show_create, set_show_create] = useState(false);
   const [ctx, set_ctx] = useState<{ x: number; y: number; pl: TPlaylist } | null>(null);
+  const [rename_modal, set_rename_modal] = useState<TPlaylist | null>(null);
   const [drag, set_drag] = useState<DragState | null>(null);
   const item_refs = useRef<(HTMLDivElement | null)[]>([]);
   const did_move = useRef(false);
@@ -188,6 +207,18 @@ export function SbPlaylists() {
       }
     } catch (e) { console.error("pl_delete:", e); }
     set_ctx(null);
+  };
+
+  const on_rename = async (name: string) => {
+    if (!rename_modal) return;
+    try {
+      await invoke("pl_rename", { id: rename_modal.id, name });
+      await load_playlists();
+      if (selected_playlist?.id === rename_modal.id) {
+        set_playlist({ ...rename_modal, name });
+      }
+    } catch (e) { console.error("pl_rename:", e); }
+    set_rename_modal(null);
   };
 
   const on_playlist = (pl: TPlaylist) => {
@@ -271,8 +302,17 @@ export function SbPlaylists() {
         <CtxMenu
           x={ctx.x}
           y={ctx.y}
+          on_rename={() => { set_rename_modal(ctx.pl); set_ctx(null); }}
           on_delete={on_delete}
           on_close={() => set_ctx(null)}
+        />
+      )}
+
+      {rename_modal && (
+        <PlRenameModal
+          current_name={rename_modal.name}
+          on_rename={on_rename}
+          on_close={() => set_rename_modal(null)}
         />
       )}
 

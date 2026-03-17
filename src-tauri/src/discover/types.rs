@@ -13,7 +13,7 @@ pub struct DzTrack {
 #[derive(Deserialize)]
 pub struct RawArtistName { pub name: String }
 #[derive(Deserialize)]
-pub struct RawAlbumInfo { pub title: String, pub cover_medium: String }
+pub struct RawAlbumInfo { pub title: String, #[serde(default)] pub cover_xl: String, #[serde(default)] pub cover_medium: String }
 #[derive(Deserialize)]
 pub struct RawTrack { pub id: u64, pub title: String, pub artist: RawArtistName, pub album: RawAlbumInfo, pub duration: u64 }
 #[derive(Deserialize)]
@@ -32,6 +32,8 @@ pub struct DzAlbumResult {
 pub struct RawAlbum {
     pub id: u64,
     pub title: String,
+    #[serde(default)]
+    pub cover_xl: String,
     #[serde(default)]
     pub cover_medium: String,
     #[serde(default)]

@@ -2,7 +2,7 @@
   "$schema": "https://raw.githubusercontent.com/nickel-org/nickel.rs/master/src/tauri.conf.schema.json",
   "productName": "GS Music",
   "version": "1.0.0",
-  "identifier": "com.gsmusic.app",
+  "identifier": "io.github.gs_music_software.desktop_recode",
   "build": {
     "frontendDist": "../dist",
     "devUrl": "http://localhost:1420",

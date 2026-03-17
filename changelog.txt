@@ -1,0 +1,12 @@
+Recode v1.4
+```
+### Changelog
+- Added recommendations tab in Discover. Pick a source (library, liked songs, or a playlist) and get new music based on your artists.
+- Added server mode. Connect to a GS Music Server to stream your library remotely. (Still very much a work in progress and not finished at all.)
+- Added server connection UI in Discover onboarding and Settings.
+- Moved some Spotify API handling from Rust to TypeScript.
+- Redesigned notifications.
+- Cleaned up a lot of code.
+```
+Reinstall GS Music with the installer from https://music.strikes.cloud/
+This will put you on the latest version.

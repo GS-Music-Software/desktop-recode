@@ -78,12 +78,16 @@ type SettingsState = {
   set_exp_volume: (v: boolean) => void;
   amll_lyrics: boolean;
   set_amll_lyrics: (v: boolean) => void;
-  amll_word_sync: boolean;
-  set_amll_word_sync: (v: boolean) => void;
   crossfade: number;
   set_crossfade: (v: number) => void;
   spatial_audio: boolean;
   set_spatial_audio: (v: boolean) => void;
+  soundcloud_dl: boolean;
+  set_soundcloud_dl: (v: boolean) => void;
+  lyrics_source: string;
+  set_lyrics_source: (v: string) => void;
+  lyric_offset: number;
+  set_lyric_offset: (v: number) => void;
   custom_presets: EqPreset[];
   save_preset: (name: string, gains: number[]) => void;
   delete_preset: (name: string) => void;
@@ -118,12 +122,17 @@ export function SettingsProv({ children }: { children: ReactNode }) {
   });
   const [exp_volume, _set_exp_vol] = useState(() => localStorage.getItem("exp_volume") === "1");
   const [amll_lyrics, _set_amll] = useState(() => localStorage.getItem("amll_lyrics") !== "0");
-  const [amll_word_sync, _set_amll_ws] = useState(() => localStorage.getItem("amll_word_sync") === "1");
   const [crossfade, _set_cf] = useState(() => {
     const s = localStorage.getItem("crossfade");
     return s ? Math.max(0, Math.min(12, parseFloat(s) || 0)) : 0;
   });
   const [spatial_audio, _set_spatial] = useState(() => localStorage.getItem("spatial_audio") === "1");
+  const [soundcloud_dl, _set_soundcloud_dl] = useState(() => localStorage.getItem("soundcloud_dl") === "1");
+  const [lyrics_source, _set_lyrics_source] = useState(() => localStorage.getItem("lyrics_source") ?? "musixmatch");
+  const [lyric_offset, _set_lyric_offset] = useState(() => {
+    const s = localStorage.getItem("lyric_offset");
+    return s !== null ? parseInt(s, 10) || 0 : 0;
+  });
   const [custom_presets, _set_custom_presets] = useState<EqPreset[]>(load_custom_presets);
 
   useEffect(() => {
@@ -173,8 +182,15 @@ export function SettingsProv({ children }: { children: ReactNode }) {
   const set_tray_enabled = (v: boolean) => persist_bool("tray_enabled", v, _set_tray);
   const set_exp_volume = (v: boolean) => persist_bool("exp_volume", v, _set_exp_vol);
   const set_amll_lyrics = (v: boolean) => persist_bool("amll_lyrics", v, _set_amll);
-  const set_amll_word_sync = (v: boolean) => persist_bool("amll_word_sync", v, _set_amll_ws);
   const set_spatial_audio = (v: boolean) => persist_bool("spatial_audio", v, _set_spatial);
+  const set_soundcloud_dl = (v: boolean) => persist_bool("soundcloud_dl", v, _set_soundcloud_dl);
+  const set_lyrics_source = (v: string) => { localStorage.setItem("lyrics_source", v); _set_lyrics_source(v); };
+
+  function set_lyric_offset(v: number) {
+    const clamped = Math.max(-3000, Math.min(3000, Math.round(v)));
+    localStorage.setItem("lyric_offset", String(clamped));
+    _set_lyric_offset(clamped);
+  }
 
   function set_eq_bands(gains: number[]) {
     localStorage.setItem("eq_bands", JSON.stringify(gains));
@@ -251,7 +267,7 @@ export function SettingsProv({ children }: { children: ReactNode }) {
   }
 
   return (
-    <Ctx.Provider value={{ immersive_bg, set_immersive_bg, eq_bands, set_eq_bands, eq_enabled, set_eq_enabled, discord_rpc, set_discord_rpc, rpc_opts, set_rpc_opts, tray_enabled, set_tray_enabled, sp_client_id, set_sp_client_id, sp_tokens, sp_token, sp_connect, sp_disconnect, sp_loading, pitch, set_pitch, exp_volume, set_exp_volume, amll_lyrics, set_amll_lyrics, amll_word_sync, set_amll_word_sync, crossfade, set_crossfade, spatial_audio, set_spatial_audio, custom_presets, save_preset, delete_preset }}>
+    <Ctx.Provider value={{ immersive_bg, set_immersive_bg, eq_bands, set_eq_bands, eq_enabled, set_eq_enabled, discord_rpc, set_discord_rpc, rpc_opts, set_rpc_opts, tray_enabled, set_tray_enabled, sp_client_id, set_sp_client_id, sp_tokens, sp_token, sp_connect, sp_disconnect, sp_loading, pitch, set_pitch, exp_volume, set_exp_volume, amll_lyrics, set_amll_lyrics, crossfade, set_crossfade, spatial_audio, set_spatial_audio, soundcloud_dl, set_soundcloud_dl, lyrics_source, set_lyrics_source, lyric_offset, set_lyric_offset, custom_presets, save_preset, delete_preset }}>
       {children}
     </Ctx.Provider>
   );

@@ -77,8 +77,8 @@ export function handle_yt_batch_done(
   });
   if (batch.done >= batch.total) {
     rescan();
-    if (batch.paths.length > 0) {
-      const name = batch.pl_name || "YouTube Playlist";
+    if (batch.pl_name && batch.paths.length > 0) {
+      const name = batch.pl_name;
       (async () => {
         try {
           const pl = await invoke<{ id: string }>("pl_create", { name, description: null, cover: null });

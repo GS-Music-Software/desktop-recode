@@ -81,7 +81,27 @@ export function ModeTabs({ mode, has_spotify, on_switch }: Props) {
           if (mode !== "youtube") e.currentTarget.style.color = c.w50;
         }}
       >
-        YouTube
+        YouTube Playlist
+      </button>
+      <button
+        onClick={() => on_switch("youtube_link")}
+        style={{
+          padding: "5px 14px",
+          borderRadius: 20,
+          fontSize: 12,
+          fontWeight: 500,
+          background: mode === "youtube_link" ? c.youtube : c.w06,
+          color: mode === "youtube_link" ? c.white : c.w50,
+          border: mode === "youtube_link" ? "none" : `1px solid ${c.w08}`,
+        }}
+        onMouseEnter={(e) => {
+          if (mode !== "youtube_link") e.currentTarget.style.color = c.white;
+        }}
+        onMouseLeave={(e) => {
+          if (mode !== "youtube_link") e.currentTarget.style.color = c.w50;
+        }}
+      >
+        YouTube Link
       </button>
     </div>
   );

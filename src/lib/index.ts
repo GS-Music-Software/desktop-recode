@@ -1,4 +1,4 @@
-export { play_src, play_resume, play_pause, play_seek, get_vol, set_vol, get_playing, get_time, get_latency, set_cbs, set_eq_band, set_eq_all, get_pitch, set_pitch, is_live, EQ_FREQS, set_crossfade, get_crossfade, set_spatial } from "./audio";
+export { play_src, play_resume, play_pause, play_seek, get_vol, set_vol, get_playing, get_time, get_latency, get_hw_latency, set_cbs, set_eq_band, set_eq_all, get_pitch, set_pitch, is_live, EQ_FREQS, set_crossfade, get_crossfade, set_spatial } from "./audio";
 export { MAX_CROSSFADE, MIN_PITCH, MAX_PITCH } from "./audio_config";
 export { make_albums, make_artists } from "./parse";
 export { format_duration, format_count } from "./fmt";

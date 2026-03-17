@@ -272,6 +272,11 @@ export function get_latency(): number {
   return Math.max(hw, 0.5);
 }
 
+export function get_hw_latency(): number {
+  if (!_ctx) return 0;
+  return (_ctx.baseLatency ?? 0) + (_ctx.outputLatency ?? 0);
+}
+
 export function set_eq_band(index: number, gain_db: number) {
   if (_a?.filters[index]) _a.filters[index].gain.value = gain_db;
   if (_b?.filters[index]) _b.filters[index].gain.value = gain_db;

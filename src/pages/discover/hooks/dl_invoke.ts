@@ -13,6 +13,8 @@ export function invoke_download(
   cover_url: string,
   duration: number,
   save_dir: string | undefined,
+  use_soundcloud?: boolean,
+  url?: string,
 ) {
   return invoke("download_track", {
     id: dl_id,
@@ -22,6 +24,8 @@ export function invoke_download(
     coverUrl: cover_url,
     duration,
     saveDir: save_dir,
+    useSoundcloud: url ? false : (use_soundcloud ?? false),
+    url: url ?? null,
   });
 }
 

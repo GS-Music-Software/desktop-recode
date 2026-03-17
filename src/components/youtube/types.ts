@@ -4,6 +4,8 @@ export type YtTrack = {
   album: string;
   duration: number;
   cover_url: string;
+  url?: string;
+  metadata_found?: boolean;
 };
 
 export type YtPlaylistResult = {

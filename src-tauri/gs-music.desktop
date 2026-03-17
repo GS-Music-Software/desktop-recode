@@ -1,0 +1,10 @@
+[Desktop Entry]
+Name=GS Music
+GenericName=Music Player
+Comment=Modern music player and downloader
+Exec=gs-music
+Icon=io.github.gs_music_software.desktop_recode
+Type=Application
+Categories=Audio;Music;AudioVideo;
+Keywords=music;player;downloader;youtube;
+StartupWMClass=GS Music

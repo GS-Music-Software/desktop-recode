@@ -163,12 +163,12 @@ export function ImportOverlay({ state }: { state: ImportState }) {
   const pct = state.total > 0 ? Math.round((completed / state.total) * 100) : 0;
 
   return (
-    <div style={{
+    <div className="ytdlp-backdrop" style={{
       position: "fixed", inset: 0, zIndex: 9999,
       background: "rgba(0,0,0,0.75)", backdropFilter: "blur(20px)",
       display: "flex", alignItems: "center", justifyContent: "center",
     }}>
-      <div style={{
+      <div className="ytdlp-panel" style={{
         width: 420, padding: "40px 36px", borderRadius: 20,
         background: c.w04, border: `1px solid ${c.w07}`,
         display: "flex", flexDirection: "column", alignItems: "center", gap: 20,

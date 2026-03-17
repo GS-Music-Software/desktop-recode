@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
-import { use_lib, use_toast } from "@/ctx";
+import { use_lib, use_toast, use_settings } from "@/ctx";
 import type { DlState, DzTrack } from "../types";
 import type { SpTrack } from "@/components/spotify/types";
 import type { YtTrack, YtPlaylistResult } from "@/components/youtube/types";
@@ -26,6 +26,7 @@ import {
 export function use_downloads() {
   const { music_dir, rescan_library, load_playlists } = use_lib();
   const { push, update } = use_toast();
+  const { soundcloud_dl } = use_settings();
 
   const [downloads, set_downloads] = useState<Map<number, DlState>>(new Map());
   const [sp_dl_keys, set_sp_dl_keys] = useState<Map<string, DlState>>(
@@ -36,6 +37,7 @@ export function use_downloads() {
   );
   const [yt_tracks, set_yt_tracks] = useState<YtTrack[]>([]);
   const [yt_loading, set_yt_loading] = useState(false);
+  const [meta_edit_queue, set_meta_edit_queue] = useState<{ track: YtTrack; idx: number }[]>([]);
   const [yt_progress, set_yt_progress] = useState<{
     phase: string;
     done: number;
@@ -53,6 +55,9 @@ export function use_downloads() {
   const yt_batch = useRef<YtBatch | null>(null);
   const album_batch = useRef<AlbumBatch | null>(null);
   const yt_pl_name = useRef("");
+
+  const sc_ref = useRef(soundcloud_dl);
+  sc_ref.current = soundcloud_dl;
 
   const lib_ref = useRef({ music_dir, rescan_library, load_playlists });
   lib_ref.current = { music_dir, rescan_library, load_playlists };
@@ -231,6 +236,7 @@ export function use_downloads() {
       track.cover_url,
       track.duration,
       music_dir ?? undefined,
+      sc_ref.current,
     ).catch((e) =>
       set_downloads((prev) =>
         new Map(prev).set(track.id, { pct: 0, done: false, err: String(e) }),
@@ -253,6 +259,7 @@ export function use_downloads() {
       track.cover_url,
       track.duration,
       music_dir ?? undefined,
+      sc_ref.current,
     ).catch((e) =>
       set_downloads((prev) =>
         new Map(prev).set(track.id, { pct: 0, done: false, err: String(e) }),
@@ -323,6 +330,7 @@ export function use_downloads() {
       t.cover_url,
       t.duration,
       music_dir ?? undefined,
+      sc_ref.current,
     ).catch((e) => {
       console.error("dl_sp_track:", e);
       set_sp_dl_keys((prev) =>
@@ -380,6 +388,27 @@ export function use_downloads() {
     }
   }
 
+  async function yt_link_import(raw: string) {
+    set_yt_loading(true);
+    set_yt_tracks([]);
+    set_yt_progress(null);
+    try {
+      const urls = raw.split(/[\n,]+/).map(s => s.trim()).filter(Boolean);
+      const res = await invoke<YtPlaylistResult>("yt_link_tracks", { urls });
+      yt_pl_name.current = "";
+      set_yt_tracks(res.tracks);
+      const needs_meta = res.tracks
+        .map((t, idx) => ({ track: t, idx }))
+        .filter(({ track }) => track.url && track.metadata_found === false);
+      if (needs_meta.length > 0) set_meta_edit_queue(needs_meta);
+    } catch {
+      set_yt_tracks([]);
+    } finally {
+      set_yt_loading(false);
+      set_yt_progress(null);
+    }
+  }
+
   function dl_yt_track(t: YtTrack, idx: number, batch = false) {
     const key = yt_track_key(t, idx);
     const existing = yt_dl_keys.get(key);
@@ -410,6 +439,8 @@ export function use_downloads() {
       t.cover_url,
       t.duration,
       music_dir ?? undefined,
+      sc_ref.current,
+      t.url,
     ).catch((e) => {
       console.error("dl_yt_track:", e);
       set_yt_dl_keys((prev) =>
@@ -447,6 +478,13 @@ export function use_downloads() {
     }
   }
 
+  function resolve_meta(idx: number, updated: { title: string; artist: string; cover_url?: string } | null) {
+    if (updated) {
+      set_yt_tracks(prev => prev.map((t, i) => i === idx ? { ...t, ...updated } : t));
+    }
+    set_meta_edit_queue(prev => prev.slice(1));
+  }
+
   return {
     downloads,
     dl_track,
@@ -459,7 +497,10 @@ export function use_downloads() {
     yt_progress,
     yt_dl_keys,
     yt_import,
+    yt_link_import,
     dl_yt_track,
     dl_yt_all,
+    meta_edit_queue,
+    resolve_meta,
   };
 }

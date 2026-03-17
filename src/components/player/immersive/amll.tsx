@@ -1,16 +1,17 @@
 import { useRef, useEffect, useCallback, useState, memo } from "react";
-import { LyricPlayer, BackgroundRender } from "@applemusic-like-lyrics/react";
+import { LyricPlayer } from "@applemusic-like-lyrics/react";
 import type { LyricPlayerRef } from "@applemusic-like-lyrics/react";
 import type { LyricLine } from "@applemusic-like-lyrics/core";
 import "@applemusic-like-lyrics/core/style.css";
-import { format_duration, get_time, use_output_device, device_icon } from "@/lib";
-import { type RepeatMode } from "@/ctx";
+import { format_duration, get_time, get_hw_latency, use_output_device, device_icon } from "@/lib";
+import { type RepeatMode, use_settings } from "@/ctx";
 import { Shuffle, Repeat, Repeat1, Music, ChevronDown, Volume1, Volume2, EllipsisVertical, MessageSquare, List } from "lucide-react";
 import { c } from "@/theme";
 import { SkipBackIcon, SkipFwdIcon, PlayIcon, PauseIcon } from "../icons";
 import { TrackCtxMenu } from "@/components/shared/track_ctx_menu";
 import { Art } from "@/components/shared/art";
 import { Marquee } from "@/components/shared/marquee";
+import { ImmersiveBg } from "./immersive_bg";
 import type { TTrack } from "@/types";
 
 type Tab = "lyrics" | "queue";
@@ -93,40 +94,24 @@ export function Amll({
   tog_shuffle, tog_repeat, on_q_play, on_close,
 }: Props) {
   const ref = useRef<LyricPlayerRef>(null);
-  const bg_ref = useRef<any>(null);
   const raf = useRef(0);
   const prev_ts = useRef(0);
+  const last_audio_t = useRef(0);
+  const last_audio_raf = useRef(0);
+  const playing_ref = useRef(playing);
+  playing_ref.current = playing;
+  const { lyric_offset } = use_settings();
+  const lyric_offset_ref = useRef(lyric_offset);
+  lyric_offset_ref.current = lyric_offset;
+  const hw_latency_ref = useRef(get_hw_latency());
+  useEffect(() => {
+    hw_latency_ref.current = get_hw_latency();
+  }, [playing]);
   const device = use_output_device();
   const DevIcon = device_icon(device.form_factor);
   const vol_pct = vol * 100;
   const [ctx_menu, set_ctx_menu] = useState<{ x: number; y: number } | null>(null);
   const [tab, set_tab] = useState<Tab>("lyrics");
-
-  useEffect(() => {
-    if (!cover) return;
-    const url = cover;
-    let stale = false;
-    const is_http = url.startsWith("http://") || url.startsWith("https://");
-
-    function load() {
-      const bgRender = bg_ref.current?.bgRender;
-      if (!bgRender) {
-        if (!stale) requestAnimationFrame(load);
-        return;
-      }
-      if (!is_http) {
-        bgRender.setAlbum(url);
-        return;
-      }
-      const img = new Image();
-      img.crossOrigin = "anonymous";
-      img.onload = () => { if (!stale) bgRender.setAlbum(img); };
-      img.src = url;
-    }
-
-    load();
-    return () => { stale = true; };
-  }, [cover]);
 
   useEffect(() => {
     if (ref.current?.lyricPlayer && lines) {
@@ -136,11 +121,17 @@ export function Amll({
 
   useEffect(() => {
     function tick(now: number) {
+      const delta = prev_ts.current ? now - prev_ts.current : 16;
+      prev_ts.current = now;
       const lp = ref.current?.lyricPlayer;
       if (lp) {
-        const delta = prev_ts.current ? now - prev_ts.current : 16;
-        prev_ts.current = now;
-        lp.setCurrentTime(Math.round(get_time() * 1000));
+        const audio_t = get_time();
+        if (audio_t !== last_audio_t.current) {
+          last_audio_t.current = audio_t;
+          last_audio_raf.current = now;
+        }
+        const interp = playing_ref.current ? audio_t + (now - last_audio_raf.current) / 1000 : audio_t;
+        lp.setCurrentTime((interp - hw_latency_ref.current) * 1000 - lyric_offset_ref.current);
         lp.update(delta);
       }
       raf.current = requestAnimationFrame(tick);
@@ -177,26 +168,15 @@ export function Amll({
     window.addEventListener("mouseup", up);
   }, [set_vol]);
 
+  const on_vol_wheel = useCallback((e: React.WheelEvent) => {
+    e.preventDefault();
+    const vol_delta = -e.deltaY * 0.001;
+    set_vol(Math.max(0, Math.min(1, vol + vol_delta)));
+  }, [vol, set_vol]);
+
   return (
     <div style={{ position: "absolute", inset: 0, overflow: "hidden", background: "#111", fontFamily: FONT }}>
-      {cover && (
-        <img src={cover} style={{
-          position: "absolute", inset: "-30%", width: "160%", height: "160%",
-          objectFit: "cover", filter: "blur(80px) saturate(1.8) brightness(0.25)",
-          zIndex: 0,
-        }} />
-      )}
-      <div style={{ position: "absolute", inset: 0, zIndex: 0 }}>
-        <BackgroundRender
-          ref={bg_ref}
-          playing={playing}
-          hasLyric={!!lines && lines.length > 0}
-          fps={30}
-          flowSpeed={2}
-          renderScale={0.4}
-          style={{ width: "100%", height: "100%", opacity: 0.7 }}
-        />
-      </div>
+      <ImmersiveBg cover_url={cover} playing={playing} />
       <div style={{ position: "absolute", inset: 0, zIndex: 0, background: "rgba(0,0,0,0.3)" }} />
 
       <div style={{
@@ -308,6 +288,7 @@ export function Amll({
             <Volume1 size={16} color="rgba(255,255,255,0.4)" />
             <div
               onMouseDown={on_vol_down}
+              onWheel={on_vol_wheel}
               style={{ flex: 1, position: "relative", height: 7, borderRadius: 99, background: "rgba(255,255,255,0.15)", cursor: "pointer" }}
             >
               <div style={{ position: "absolute", top: 0, left: 0, height: "100%", width: `${vol_pct}%`, borderRadius: 99, background: "rgba(255,255,255,0.6)", transition: "width 0.1s ease" }} />
@@ -333,8 +314,29 @@ export function Amll({
           {tab === "lyrics" && (
             <>
               {lines === undefined && (
-                <div style={{ height: "100%", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                  <p style={{ color: "rgba(255,255,255,0.18)", fontSize: 14 }}>Loading lyrics…</p>
+                <div style={{ height: "100%", display: "flex", alignItems: "center", justifyContent: "center", flexDirection: "column", gap: 16 }}>
+                  <div style={{ position: "relative", width: 40, height: 40 }}>
+                    {[...Array(12)].map((_, i) => (
+                      <div
+                        key={i}
+                        style={{
+                          position: "absolute",
+                          left: "50%",
+                          top: "50%",
+                          width: 3,
+                          height: 10,
+                          marginLeft: -1.5,
+                          marginTop: -5,
+                          background: "rgba(255,255,255,0.95)",
+                          borderRadius: 1.5,
+                          transform: `rotate(${i * 30}deg) translateY(-14px)`,
+                          animation: `segmentFade 1.2s ease-in-out infinite`,
+                          animationDelay: `${-i * 0.1}s`,
+                        }}
+                      />
+                    ))}
+                  </div>
+                  <p style={{ color: "rgba(255,255,255,0.35)", fontSize: 14 }}>Loading lyrics…</p>
                 </div>
               )}
               {lines === null && (
@@ -355,10 +357,17 @@ export function Amll({
                   enableBlur
                   enableScale
                   wordFadeWidth={0.5}
+                  onLyricLineClick={(e) => {
+                    const line = lines[e.lineIndex];
+                    if (line && line.startTime > 0) {
+                      seek(line.startTime / 1000);
+                    }
+                  }}
                   style={{
                     position: "absolute",
                     inset: 0,
                     mixBlendMode: "plus-lighter",
+                    cursor: "pointer",
                   }}
                 />
               )}
@@ -429,7 +438,7 @@ export function Amll({
       </div>
 
       {ctx_menu && cur && (
-        <TrackCtxMenu x={ctx_menu.x} y={ctx_menu.y} track={cur} on_close={() => set_ctx_menu(null)} />
+        <TrackCtxMenu x={ctx_menu.x} y={ctx_menu.y} track={cur} on_close={() => set_ctx_menu(null)} on_immersive_close={on_close} />
       )}
     </div>
   );

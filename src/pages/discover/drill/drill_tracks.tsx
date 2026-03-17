@@ -3,6 +3,7 @@ import { Download } from "lucide-react";
 import { format_duration } from "@/lib";
 import type { DzAlbum, DzTrack, DlState } from "../types";
 import { DlButton } from "../components/dl_btn";
+import { Modal } from "@/components/modal";
 import { c } from "@/theme";
 
 export function DrillTracks({
@@ -69,73 +70,60 @@ export function DrillTracks({
       </div>
 
       {dialog && tracks && (
-        <div
-          onClick={() => set_dialog(false)}
-          style={{
-            position: "fixed", inset: 0, zIndex: 100,
-            background: c.b35, backdropFilter: "blur(24px)",
-            display: "flex", alignItems: "center", justifyContent: "center",
-          }}
-        >
-          <div
-            onClick={(e) => e.stopPropagation()}
-            style={{
-              background: c.modal, border: `1px solid ${c.w08}`,
-              borderRadius: 18, padding: "32px 36px",
-              width: 420, boxShadow: `0 24px 80px ${c.b70}`,
-              display: "flex", flexDirection: "column", gap: 16,
-            }}
-          >
-            <p style={{ fontSize: 17, fontWeight: 700, color: c.text, marginBottom: 4 }}>
-              Download Album
-            </p>
-            <p style={{ fontSize: 13, color: c.w50 }}>
-              How would you like to download <span style={{ fontWeight: 600, color: c.w70 }}>{album.title}</span>?
-            </p>
-            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-              <button
-                onClick={() => { set_dialog(false); on_download_all(tracks, null); }}
-                style={{
-                  padding: "10px 12px", borderRadius: 8,
-                  fontSize: 13, fontWeight: 500, color: c.text,
-                  background: c.w06, border: `1px solid ${c.w10}`,
-                  textAlign: "left", transition: "background 0.15s",
-                }}
-                onMouseEnter={(e) => (e.currentTarget.style.background = c.w10)}
-                onMouseLeave={(e) => (e.currentTarget.style.background = c.w06)}
-              >
-                Download album only
-              </button>
-              <button
-                onClick={() => { set_dialog(false); on_download_all(tracks, `${album.artist} - ${album.title}`, album.cover_url); }}
-                style={{
-                  padding: "10px 12px", borderRadius: 8,
-                  fontSize: 13, fontWeight: 500, color: c.text,
-                  background: c.w06, border: `1px solid ${c.w10}`,
-                  textAlign: "left", transition: "background 0.15s",
-                }}
-                onMouseEnter={(e) => (e.currentTarget.style.background = c.w10)}
-                onMouseLeave={(e) => (e.currentTarget.style.background = c.w06)}
-              >
-                Download album and create playlist
-              </button>
-            </div>
-            <div style={{ display: "flex", justifyContent: "flex-end", marginTop: 4 }}>
-              <button
-                onClick={() => set_dialog(false)}
-                style={{
-                  padding: "8px 20px", borderRadius: 8,
-                  fontSize: 13, fontWeight: 500, color: c.w50,
-                  background: c.w06, transition: "background 0.15s",
-                }}
-                onMouseEnter={(e) => (e.currentTarget.style.background = c.w10)}
-                onMouseLeave={(e) => (e.currentTarget.style.background = c.w06)}
-              >
-                Cancel
-              </button>
-            </div>
-          </div>
-        </div>
+        <Modal on_close={() => set_dialog(false)} panel_style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+          {(close) => (
+            <>
+              <p style={{ fontSize: 17, fontWeight: 700, color: c.text, marginBottom: 4 }}>
+                Download Album
+              </p>
+              <p style={{ fontSize: 13, color: c.w50 }}>
+                How would you like to download <span style={{ fontWeight: 600, color: c.w70 }}>{album.title}</span>?
+              </p>
+              <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                <button
+                  onClick={() => { close(); on_download_all(tracks, null); }}
+                  style={{
+                    padding: "10px 12px", borderRadius: 8,
+                    fontSize: 13, fontWeight: 500, color: c.text,
+                    background: c.w06, border: `1px solid ${c.w10}`,
+                    textAlign: "left", transition: "background 0.15s",
+                  }}
+                  onMouseEnter={(e) => (e.currentTarget.style.background = c.w10)}
+                  onMouseLeave={(e) => (e.currentTarget.style.background = c.w06)}
+                >
+                  Download album only
+                </button>
+                <button
+                  onClick={() => { close(); on_download_all(tracks, `${album.artist} - ${album.title}`, album.cover_url); }}
+                  style={{
+                    padding: "10px 12px", borderRadius: 8,
+                    fontSize: 13, fontWeight: 500, color: c.text,
+                    background: c.w06, border: `1px solid ${c.w10}`,
+                    textAlign: "left", transition: "background 0.15s",
+                  }}
+                  onMouseEnter={(e) => (e.currentTarget.style.background = c.w10)}
+                  onMouseLeave={(e) => (e.currentTarget.style.background = c.w06)}
+                >
+                  Download album and create playlist
+                </button>
+              </div>
+              <div style={{ display: "flex", justifyContent: "flex-end", marginTop: 4 }}>
+                <button
+                  onClick={close}
+                  style={{
+                    padding: "8px 20px", borderRadius: 8,
+                    fontSize: 13, fontWeight: 500, color: c.w50,
+                    background: c.w06, transition: "background 0.15s",
+                  }}
+                  onMouseEnter={(e) => (e.currentTarget.style.background = c.w10)}
+                  onMouseLeave={(e) => (e.currentTarget.style.background = c.w06)}
+                >
+                  Cancel
+                </button>
+              </div>
+            </>
+          )}
+        </Modal>
       )}
 
       {loading && (

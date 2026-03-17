@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component type="desktop-application">
+  <id>io.github.gs_music_software.desktop_recode</id>
+  <name>GS Music</name>
+  <summary>Modern music player and downloader</summary>
+  <developer id="io.github.gs_music_software">
+    <name>GavinStrikes Software</name>
+  </developer>
+
+  <metadata_license>MIT</metadata_license>
+  <project_license>MIT</project_license>
+
+  <description>
+    <p>
+      GS Music is a music player and downloader built for Linux. It lets you search and download
+      tracks from YouTube and SoundCloud directly to your local library, with support for synced
+      lyrics, playlists, and a clean immersive player view. Designed to work entirely offline once
+      your music is downloaded.
+    </p>
+  </description>
+
+  <launchable type="desktop-id">gs-music.desktop</launchable>
+
+  <url type="homepage">https://github.com/GS-Music-Software/desktop-recode</url>
+  <url type="bugtracker">https://github.com/GS-Music-Software/desktop-recode/issues</url>
+
+  <screenshots>
+    <screenshot type="default">
+      <caption>Playlist view with track listing and playback controls</caption>
+      <image>https://raw.githubusercontent.com/GS-Music-Software/desktop-recode/master/screenshots/playlist.png</image>
+    </screenshot>
+    <screenshot>
+      <caption>Discover page for searching and downloading music</caption>
+      <image>https://raw.githubusercontent.com/GS-Music-Software/desktop-recode/master/screenshots/discover.png</image>
+    </screenshot>
+    <screenshot>
+      <caption>Built-in equalizer with presets and crossfade support</caption>
+      <image>https://raw.githubusercontent.com/GS-Music-Software/desktop-recode/master/screenshots/equalizer.png</image>
+    </screenshot>
+    <screenshot>
+      <caption>Settings page with appearance and audio customization</caption>
+      <image>https://raw.githubusercontent.com/GS-Music-Software/desktop-recode/master/screenshots/settings.png</image>
+    </screenshot>
+  </screenshots>
+
+  <releases>
+    <release version="1.5.0" date="2026-03-16">
+      <description>
+        <p>Initial Flathub release.</p>
+      </description>
+    </release>
+    <release version="1.4.0" date="2026-03-01"/>
+  </releases>
+
+  <content_rating type="oars-1.1"/>
+</component>

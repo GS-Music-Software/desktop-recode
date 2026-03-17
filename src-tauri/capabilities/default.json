@@ -13,6 +13,7 @@
     "fs:allow-write",
     "fs:write-all",
     "shell:default",
-    "shell:allow-open"
+    "shell:allow-open",
+    "core:window:allow-set-title"
   ]
 }

@@ -1,6 +1,7 @@
 use std::sync::Mutex;
 use tauri::{
     Emitter, Manager, AppHandle,
+    image::Image,
     menu::{Menu, MenuItem, PredefinedMenuItem},
     tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent},
 };
@@ -25,8 +26,11 @@ fn create(app: &AppHandle) -> Result<(), String> {
         let quit_i = MenuItem::with_id(app, "quit", "Quit", true, None::<&str>).map_err(|e| e.to_string())?;
         let menu = Menu::with_items(app, &[&play_pause_i, &next_i, &prev_i, &sep, &show_i, &quit_i]).map_err(|e| e.to_string())?;
 
+        let icon = Image::from_bytes(include_bytes!("../icons/icon.png"))
+            .map_err(|e| e.to_string())?;
+
         TrayIconBuilder::with_id(TRAY_ID)
-            .icon(app.default_window_icon().ok_or("no icon")?.clone())
+            .icon(icon)
             .tooltip("GS Music")
             .menu(&menu)
             .menu_on_left_click(false)

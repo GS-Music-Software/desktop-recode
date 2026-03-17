@@ -23,15 +23,21 @@
     "@tauri-apps/plugin-dialog": "^2.6.0",
     "@tauri-apps/plugin-fs": "^2.4.5",
     "@tauri-apps/plugin-shell": "^2.3.5",
+    "colorthief": "^3.3.1",
+    "fast-average-color": "^9.5.0",
     "lucide-react": "^0.575.0",
+    "mesh-gradient-ts": "^1.0.5",
     "react": "^19.2.4",
-    "react-dom": "^19.2.4"
+    "react-dom": "^19.2.4",
+    "three": "^0.183.2",
+    "vibrant": "^0.0.1"
   },
   "devDependencies": {
     "@tailwindcss/vite": "^4.2.0",
     "@tauri-apps/cli": "^2.10.0",
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",
+    "@types/three": "^0.183.1",
     "@vitejs/plugin-react": "^5.1.4",
     "tailwindcss": "^4.2.0",
     "typescript": "^5.9.3",

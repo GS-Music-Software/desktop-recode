@@ -25,9 +25,9 @@ export function PlCtrl() {
         )}
         <button
           onClick={toggle}
-          style={{ width: 36, height: 36, borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", background: c.white, flexShrink: 0 }}
+          style={{ display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}
         >
-          {playing ? <PauseIcon size={16} color={c.black} /> : <PlayIcon size={16} color={c.black} />}
+          {playing ? <PauseIcon size={28} color={c.white} /> : <PlayIcon size={28} color={c.white} />}
         </button>
         {!is_live && (
           <button onClick={next} style={{ display: "flex" }}>

@@ -8,7 +8,7 @@ import { Play, Shuffle } from "lucide-react";
 
 export function Albums() {
   const { albums, set_view, set_album, search } = use_lib();
-  const { play } = use_pl();
+  const { play, set_shuffle } = use_pl();
 
   const filtered = useMemo(() => {
     if (!search) return albums;
@@ -25,9 +25,10 @@ export function Albums() {
 
   const shuffle_all = useCallback(() => {
     if (all_tracks.length === 0) return;
+    set_shuffle(true);
     const shuffled = [...all_tracks].sort(() => Math.random() - 0.5);
     play(shuffled[0], shuffled);
-  }, [all_tracks, play]);
+  }, [all_tracks, play, set_shuffle]);
 
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>

@@ -3,7 +3,7 @@ import { createPortal } from "react-dom";
 import { invoke } from "@tauri-apps/api/core";
 import { use_lib } from "@/ctx";
 import { TTrack } from "@/types";
-import { Plus, Heart, Trash2 } from "lucide-react";
+import { Plus, Heart, Trash2, Disc3, User } from "lucide-react";
 import { DeleteConfirm } from "./delete_confirm";
 import { c } from "@/theme";
 
@@ -12,6 +12,7 @@ type Props = {
   y: number;
   track: TTrack;
   on_close: () => void;
+  on_immersive_close?: () => void;
 };
 
 function MenuItem({ label, icon: Icon, on_click, danger }: { label: string; icon: typeof Plus; on_click: () => void; danger?: boolean }) {
@@ -38,8 +39,8 @@ function MenuItem({ label, icon: Icon, on_click, danger }: { label: string; icon
 
 const SKIP_DELETE_KEY = "skip_delete_confirm";
 
-export function TrackCtxMenu({ x, y, track, on_close }: Props) {
-  const { playlists, load_playlists, is_fav, toggle_fav, music_dir, load_library } = use_lib();
+export function TrackCtxMenu({ x, y, track, on_close, on_immersive_close }: Props) {
+  const { playlists, load_playlists, is_fav, toggle_fav, music_dir, load_library, albums, artists, set_album, set_artist, set_view } = use_lib();
   const fav = is_fav(track.path);
   const [show_confirm, set_show_confirm] = useState(false);
 
@@ -79,10 +80,20 @@ export function TrackCtxMenu({ x, y, track, on_close }: Props) {
     do_delete();
   };
 
+  const go_album = () => {
+    const al = albums.find(a => a.name === track.album && a.artist === track.artist);
+    if (al) { set_album(al); set_view("album_detail"); on_immersive_close?.(); on_close(); }
+  };
+
+  const go_artist = () => {
+    const ar = artists.find(a => a.name === track.artist);
+    if (ar) { set_artist(ar); set_view("artist_detail"); on_immersive_close?.(); on_close(); }
+  };
+
   const vw = window.innerWidth;
   const vh = window.innerHeight;
   const menu_w = 200;
-  const est_h = 36 + 9 + 32 + playlists.length * 36 + 9 + 36;
+  const est_h = 36 + 9 + 36 + 36 + 8 + 32 + playlists.length * 36 + 9 + 36;
   const left = x + menu_w > vw ? vw - menu_w - 8 : x;
   const top = y + est_h > vh ? Math.max(8, vh - est_h - 8) : y;
 
@@ -108,6 +119,9 @@ export function TrackCtxMenu({ x, y, track, on_close }: Props) {
               icon={Heart}
               on_click={() => { toggle_fav(track.path); on_close(); }}
             />
+            <div style={{ height: 1, background: c.w08, margin: "4px 6px" }} />
+            <MenuItem label="Go to Album" icon={Disc3} on_click={go_album} />
+            <MenuItem label="Go to Artist" icon={User} on_click={go_artist} />
             <div style={{ height: 1, background: c.w08, margin: "4px 6px" }} />
             <p style={{
               fontSize: 11, fontWeight: 600, color: c.w30,

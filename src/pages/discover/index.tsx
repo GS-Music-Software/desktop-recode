@@ -6,6 +6,7 @@ import { use_settings, use_lib } from "@/ctx";
 import { SpPlaylistList, SpTrackList } from "@/components/spotify/discover";
 import type { SpPlaylist, SpTrack, SpDrill } from "@/components/spotify/discover";
 import { YtUrlInput, YtTrackList } from "@/components/youtube/discover";
+import { YtLinkInput } from "@/components/youtube/link_input";
 import type { SearchMode, DzTrack, DzAlbum, DzArtist, DrillState } from "./types";
 import { DrillAlbums } from "./drill/drill_albums";
 import { DrillTracks } from "./drill/drill_tracks";
@@ -16,6 +17,7 @@ import { YtProgress } from "./results/yt_progress";
 import { SearchHeader } from "./components/search_header";
 import { ModeTabs } from "./components/mode_tabs";
 import { use_downloads } from "./hooks/use_downloads";
+import { MetaEditModal } from "./components/meta_edit_modal";
 import { c } from "@/theme";
 
 export function Discover() {
@@ -24,7 +26,8 @@ export function Discover() {
   const {
     downloads, dl_track, dl_album_all,
     sp_dl_keys, dl_sp_track, dl_sp_all,
-    yt_tracks, yt_loading, yt_progress, yt_dl_keys, yt_import, dl_yt_track, dl_yt_all,
+    yt_tracks, yt_loading, yt_progress, yt_dl_keys, yt_import, yt_link_import, dl_yt_track, dl_yt_all,
+    meta_edit_queue, resolve_meta,
   } = use_downloads();
 
   const [q, set_q] = useState("");
@@ -46,6 +49,7 @@ export function Discover() {
   const [rec_source, set_rec_source] = useState("library");
   const [rec_open, set_rec_open] = useState(false);
   const rec_ref = useRef<HTMLDivElement>(null);
+  const meta_edit = meta_edit_queue[0] ?? null;
 
   useEffect(() => {
     function close(e: MouseEvent) {
@@ -92,8 +96,10 @@ export function Discover() {
     }
   }
 
+
+
   async function do_search(query = q, m = mode) {
-    if (!query.trim() || m === "spotify" || m === "youtube" || m === "recs") return;
+    if (!query.trim() || m === "spotify" || m === "youtube" || m === "youtube_link" || m === "recs") return;
     set_searching(true);
     set_no_res(false);
     set_drill(null);
@@ -214,7 +220,7 @@ export function Discover() {
     track_results.length > 0 ||
     album_results.length > 0 ||
     artist_results.length > 0;
-  const show_empty = !has_results && !searching && !no_res && !drill && mode !== "spotify" && mode !== "youtube" && mode !== "recs";
+  const show_empty = !has_results && !searching && !no_res && !drill && mode !== "spotify" && mode !== "youtube" && mode !== "youtube_link" && mode !== "recs" && mode !== "stream";
 
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
@@ -372,6 +378,21 @@ export function Discover() {
           </>
         )}
 
+        {mode === "youtube_link" && (
+          <>
+            <YtLinkInput loading={yt_loading} on_search={yt_link_import} />
+            {yt_loading && <YtProgress progress={yt_progress} fetch_label="Fetching video info..." />}
+            {!yt_loading && yt_tracks.length > 0 && (
+              <YtTrackList
+                tracks={yt_tracks}
+                dl_keys={yt_dl_keys}
+                on_download={dl_yt_track}
+                on_download_all={dl_yt_all}
+              />
+            )}
+          </>
+        )}
+
         {mode === "spotify" && !sp_drill && (
           <SpPlaylistList
             playlists={sp_playlists}
@@ -422,6 +443,8 @@ export function Discover() {
           <ArtistResults artists={artist_results} on_open={open_artist} />
         )}
       </div>
+
+      <MetaEditModal item={meta_edit} on_resolve={resolve_meta} />
     </div>
   );
 }

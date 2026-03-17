@@ -9,7 +9,12 @@ export function use_amll_lines(
 ): AmllLine[] | null | undefined {
   return useMemo(() => {
     if (ttml === undefined || lyrics === undefined) return undefined;
-    if (ttml && ttml.length > 0) return ttml;
+    if (ttml && ttml.length > 0) {
+      return ttml.map(l => ({
+        ...l,
+        words: [{ startTime: l.startTime, endTime: l.endTime, word: l.words.map(w => w.word).join(""), romanWord: "", obscene: false }],
+      })) as AmllLine[];
+    }
     if (!lyrics || lyrics.length === 0) return null;
     return lyrics.map((l, i) => {
       const start = l.time * 1000;

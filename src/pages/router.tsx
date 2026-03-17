@@ -36,7 +36,9 @@ export function Router() {
 
   return (
     <div style={{ display: "flex", flexDirection: "column", flex: 1, minHeight: 0 }}>
-      {page}
+      <div key={view} style={{ display: "flex", flexDirection: "column", flex: 1, minHeight: 0, animation: "page_fade_in 0.3s ease-out" }}>
+        {page}
+      </div>
     </div>
   );
 }

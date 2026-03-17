@@ -2,6 +2,7 @@ import { createContext, useContext, useState, useCallback, useEffect, useRef, ty
 import { TTrack, TRadioStation } from "@/types";
 import { play_src, play_resume, play_pause, play_seek, set_vol as audio_set_vol, set_cbs } from "@/lib";
 import { listen } from "@tauri-apps/api/event";
+import { invoke } from "@tauri-apps/api/core";
 
 export type RepeatMode = "off" | "all" | "one";
 
@@ -23,6 +24,7 @@ type PlState = {
   prev: () => void;
   set_volume: (v: number) => void;
   toggle_shuffle: () => void;
+  set_shuffle: (v: boolean) => void;
   toggle_repeat: () => void;
 };
 
@@ -51,10 +53,31 @@ export function PlProv({ children }: { children: ReactNode }) {
   const [shuffle, set_shuffle] = useState(false);
   const [repeat, set_repeat] = useState<RepeatMode>("off");
 
-  const go = useCallback((track: TTrack) => {
+  const go = useCallback(async (track: TTrack) => {
     set_current(track);
     set_time(0);
+    const is_url = track.path.startsWith("http://") || track.path.startsWith("https://");
+    // DEAD CODE: Online playback from YouTube is no longer used
+    // const online = !is_url && localStorage.getItem("online_playback") === "1";
+    // if (online) {
+    //   try {
+    //     const q = `${track.artist} ${track.title}`;
+    //     console.log("[online] searching:", q);
+    //     const results = await invoke<{ video_id: string; title: string; artist: string }[]>("yt_search", { query: q });
+    //     if (!results.length) { console.error("[online] no results"); return; }
+    //     const pick = results[0];
+    //     console.log("[online] matched:", pick.title, "-", pick.artist, `(${pick.video_id})`);
+    //     const stream = await invoke<{ url: string; mime: string; bitrate: number }>("yt_get_stream", { videoId: pick.video_id, highQuality: true });
+    //     console.log("[online] streaming:", stream.mime, stream.bitrate, "bps");
+    //     await play_src(stream.url);
+    //     set_playing(true);
+    //   } catch (e) {
+    //     console.error("[online] failed, falling back to local:", e);
+    //     play_src(track.path).then(() => set_playing(true)).catch(console.error);
+    //   }
+    // } else {
     play_src(track.path).then(() => set_playing(true)).catch(console.error);
+    // }
   }, []);
 
   const next = useCallback(() => {
@@ -154,7 +177,7 @@ export function PlProv({ children }: { children: ReactNode }) {
       value={{
         current, current_station, queue, queue_idx, playing, time, volume, shuffle, repeat,
         play, play_station, toggle, seek, next, prev, set_volume: set_v,
-        toggle_shuffle, toggle_repeat,
+        toggle_shuffle, set_shuffle, toggle_repeat,
       }}
     >
       {children}

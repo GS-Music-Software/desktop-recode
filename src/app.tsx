@@ -1,4 +1,5 @@
 import { useEffect, useState, useRef } from "react";
+import { getCurrentWindow } from "@tauri-apps/api/window";
 import { use_lib, use_pl, use_settings, use_profile, use_theme } from "@/ctx";
 import { use_cover, use_rpc, load_keybinds, combo_from_event, get_time } from "@/lib";
 import type { KeybindAction, KeybindBinds } from "@/lib";
@@ -16,30 +17,47 @@ import { c } from "@/theme";
 function ImmersiveBg({ cover }: { cover: string | null }) {
   if (!cover) return null;
   return (
-    <div style={{ position: "fixed", inset: 0, zIndex: 0, pointerEvents: "none", overflow: "hidden" }}>
-      <img src={cover} style={{
-        position: "absolute", inset: "-40%", width: "180%", height: "180%",
-        objectFit: "cover", filter: "blur(60px) saturate(2) brightness(0.25)",
-      }} />
-      <img src={cover} className="iv-bg-b1" style={{
-        position: "absolute", width: "80%", height: "80%", top: "-25%", left: "-20%",
-        objectFit: "cover", borderRadius: "50%",
-        filter: "blur(80px) saturate(3) brightness(0.35)",
-        animation: "blob1 18s ease-in-out infinite",
-      }} />
-      <img src={cover} className="iv-bg-b2" style={{
-        position: "absolute", width: "75%", height: "75%", bottom: "-25%", right: "-15%",
-        objectFit: "cover", borderRadius: "50%",
-        filter: "blur(90px) saturate(3.2) brightness(0.3)",
-        animation: "blob2 24s ease-in-out infinite",
-      }} />
-      <img src={cover} className="iv-bg-b3" style={{
-        position: "absolute", width: "60%", height: "60%", top: "20%", right: "5%",
-        objectFit: "cover", borderRadius: "50%",
-        filter: "blur(70px) saturate(2.8) brightness(0.28)",
-        animation: "blob3 30s ease-in-out infinite",
-      }} />
+    <div style={{ position: "fixed", inset: 0, z_index: 0, pointer_events: "none", overflow: "hidden" }}>
+      <img
+        src={cover}
+        style={{
+          position: "absolute",
+          top: 0,
+          left: 0,
+          width: "200%",
+          height: "200%",
+          filter: "brightness(100%) blur(80px) saturate(150%) contrast(1.2)",
+          opacity: 0.8,
+          animation: "rotate_bg 35s linear infinite",
+          object_fit: "cover",
+        }}
+      />
+      <img
+        src={cover}
+        style={{
+          position: "absolute",
+          bottom: 0,
+          right: 0,
+          width: "200%",
+          height: "200%",
+          filter: "brightness(95%) blur(80px) saturate(140%) contrast(1.1)",
+          opacity: 0.6,
+          animation: "rotate_bg 35s linear infinite reverse",
+          animation_delay: "10s",
+          object_fit: "cover",
+        }}
+      />
       <div style={{ position: "absolute", inset: 0, background: c.b68 }} />
+      <style>{`
+        @keyframes rotate_bg {
+          0% {
+            transform: rotate(0deg);
+          }
+          100% {
+            transform: rotate(360deg);
+          }
+        }
+      `}</style>
     </div>
   );
 }
@@ -58,6 +76,14 @@ export function App() {
   const [ytdlp_ready, set_ytdlp_ready] = useState(false);
   const [show_switch, set_show_switch] = useState(false);
   const [switch_url, set_switch_url] = useState("");
+
+ 
+  useEffect(() => {
+    const win = getCurrentWindow();
+    const t = current?.title ? `GS Music - ${current.title}` : "GS Music";
+    document.title = t;
+    win.setTitle(t).catch(console.error);
+  }, [current?.title, current?.artist]);
 
   useEffect(() => {
     function on_mouse(e: MouseEvent) {

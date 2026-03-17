@@ -52,7 +52,7 @@ pub async fn get_recommendations(artists: Vec<String>) -> Result<Vec<DzTrack>, S
                     title: t.title,
                     artist: t.artist.name,
                     album: t.album.title,
-                    cover_url: t.album.cover_medium,
+                    cover_url: if t.album.cover_xl.is_empty() { t.album.cover_medium } else { t.album.cover_xl },
                     duration: t.duration,
                 });
             }
