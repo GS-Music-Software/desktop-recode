@@ -2,7 +2,7 @@ import { createContext, useContext, useState, useCallback, useEffect, useRef, ty
 import { TTrack, TRadioStation } from "@/types";
 import { play_src, play_resume, play_pause, play_seek, set_vol as audio_set_vol, set_cbs } from "@/lib";
 import { listen } from "@tauri-apps/api/event";
-import { invoke } from "@tauri-apps/api/core";
+
 
 export type RepeatMode = "off" | "all" | "one";
 
@@ -56,9 +56,8 @@ export function PlProv({ children }: { children: ReactNode }) {
   const go = useCallback(async (track: TTrack) => {
     set_current(track);
     set_time(0);
-    const is_url = track.path.startsWith("http://") || track.path.startsWith("https://");
     // DEAD CODE: Online playback from YouTube is no longer used
-    // const online = !is_url && localStorage.getItem("online_playback") === "1";
+    // const online = !track.path.startsWith("http") && localStorage.getItem("online_playback") === "1";
     // if (online) {
     //   try {
     //     const q = `${track.artist} ${track.title}`;

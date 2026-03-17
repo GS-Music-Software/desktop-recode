@@ -17,7 +17,7 @@ import { c } from "@/theme";
 function ImmersiveBg({ cover }: { cover: string | null }) {
   if (!cover) return null;
   return (
-    <div style={{ position: "fixed", inset: 0, z_index: 0, pointer_events: "none", overflow: "hidden" }}>
+    <div style={{ position: "fixed", inset: 0, zIndex: 0, pointerEvents: "none", overflow: "hidden" }}>
       <img
         src={cover}
         style={{
@@ -29,7 +29,7 @@ function ImmersiveBg({ cover }: { cover: string | null }) {
           filter: "brightness(100%) blur(80px) saturate(150%) contrast(1.2)",
           opacity: 0.8,
           animation: "rotate_bg 35s linear infinite",
-          object_fit: "cover",
+          objectFit: "cover",
         }}
       />
       <img
@@ -43,8 +43,8 @@ function ImmersiveBg({ cover }: { cover: string | null }) {
           filter: "brightness(95%) blur(80px) saturate(140%) contrast(1.1)",
           opacity: 0.6,
           animation: "rotate_bg 35s linear infinite reverse",
-          animation_delay: "10s",
-          object_fit: "cover",
+          animationDelay: "10s",
+          objectFit: "cover",
         }}
       />
       <div style={{ position: "absolute", inset: 0, background: c.b68 }} />
