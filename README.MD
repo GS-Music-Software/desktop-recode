@@ -7,6 +7,8 @@
 
 <p align="center">
   Desktop music player built with Tauri, React, and Rust.
+
+  PROJECT IS CURRENTLY IN THE PROCESS OF BEING RECODED. NO UPDATES UNTIL THE RECODE IS DONE.
 </p>
 
 <p align="center">
